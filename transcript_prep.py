@@ -11,7 +11,7 @@ Typical usage example:
 """
 import glob
 from utils import arg_parse
-from subject import subject, transcript
+from subject import Subject, Transcript
 
 def main():
     """Generate patient transcript."""
@@ -20,12 +20,12 @@ def main():
     sid = args.sid
     input_name = args.input_name
 
-    subject_n = subject(sid)
+    subject_n = Subject(sid)
     subject_n.update_log('04_transcript_prep: start')
     subject_n.transcript_list()
 
     for file in subject_n.xml_files:
-        partTranscript = transcript(sid,file)
+        partTranscript = Transcript(sid,file)
         partTranscript.parse_xml()
 
     subject_n.update_log('04_transcript_prep: end')

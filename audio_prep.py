@@ -11,7 +11,7 @@ Typical usage example:
 
 import pandas as pd
 from utils import arg_parse
-from subject import subject, audio
+from subject import Subject, Audio
 
 def crop_silence(subject_n,transcribe_audio):
     partname = str(transcribe_audio.name).split('_')
