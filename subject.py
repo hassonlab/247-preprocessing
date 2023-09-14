@@ -369,27 +369,67 @@ class Transcript(Subject):
         """Convert Verbit.AI format to our format."""
         #transcript_df = pd.DataFrame(columns=['token_idx', 'token_type', 'token', 'onset_day', 'onset_time', 
         #                                      'offset_day', 'offset_time', 'utterance_idx', 'audio_file'])
-        transcipt = []
-        utterance_idx = 0
+
+        # Empty list to append to
+        transcript = []
+        # Increase utterance count for every new utterance
+        utterance_idx = -1
+        # Punctuation we want to split and maintain from tokens
+        punc = '([. |, |! |?])'
         # get element tree
         tree = ET.parse(self.transcriptPath / 'xml/' / self.name) 
-        # get root
         root = tree.getroot()
+
+        # Speaker will be 'Unknown' if the first line doesn't contain a speaker label,
+        # else speaker label is maintained from previous line.
+        speaker = 'Unknown'
         # loop through and index into relevant children
         for child in root.findall('.//{http://www.w3.org/2006/10/ttaf1}div/{http://www.w3.org/2006/10/ttaf1}p'):
             text = child.text
             onset = child.attrib['begin']
             offset = child.attrib['end']
+
+            # This is an empy line. It might be the case that the next line has both words (?)
+            if text == None: continue
+
+            if '[' in text:
+                # Remove whitespace inside square brackets so we don't split a single tag
+                start_idx = text.index('[')
+                end_idx = text.index(']')+1
+                text = text[:start_idx] + text[start_idx:end_idx].replace(' ','') + text[end_idx:]
+
+            # Split if multiple tokens in line
             line = text.split(' ')
+
+            # '>>' indicates new utterance
             if line[0] == '>>': 
                 utterance_idx += 1
                 del line[0]
-            for elem in line:
-                token = re.split('.,!?',elem)
-                if '[' in elem: token_type = 'tag'
-                line_list = [token_type, token, onset, offset, utterance_idx]
-                breakpoint()
 
+                # Update speaker
+                label_break = [idx for idx,s in enumerate(line) if ':' in s]
+                if label_break: 
+                    speaker = ''.join(line[:label_break[0]+1]) 
+                    del line[:label_break[0]+1]
+            for elem in line: 
+                # Split if contains punctuation
+                tokens = re.split(punc,elem)
+                for token in tokens:
+                    # Square brackets indicates tag
+                    if '[' in token: token_type = 'tag'
+                    elif token in punc: 
+                        token_type = 'punctuation'
+                        # TODO: Does the punctuation we want always come at the end of line?
+                        del tokens[-1]
+                    else: token_type = 'word'
+                    # List for this line
+                    line_list = [token_type, token, onset, offset, speaker, utterance_idx]
+                    # Append to full part transcript
+                    transcript.append(line_list)
+        #df = pd.DataFrame(transcript,columns=['token_type','token','onset','offset','speaker','utterance_idx'])
+        #df.to_csv('test.csv')
+        # TODO: Decide what to do with the 'Multiple Speaker' tag
+        # TODO: Checks for additional punctuation: '--'
         return
 
     def add_dt(self):
