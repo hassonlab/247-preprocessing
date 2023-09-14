@@ -146,8 +146,9 @@ class Subject:
         # We use Globus Transfer API to transfer large EDF files
         # Using Globus-CLI works, but there's probably a better way to do this
 
-        source_endpoint_id = "28e1658e-6ce6-11e9-bf46-0e4a062367b8:"
-        dest_endpoint_id = "6ce834d6-ff8a-11e6-bad1-22000b9a448b:"
+        # Fill in
+        source_endpoint_id = ""
+        dest_endpoint_id = ""
 
         #TODO: fix this
         for filetype in filetypes:
