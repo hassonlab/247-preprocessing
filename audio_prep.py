@@ -28,12 +28,12 @@ def main():
     sid = args.sid
     input_name = args.input_name
 
-    subject_n = subject(sid)
+    subject_n = Subject(sid)
     subject_n.update_log('03_audio_prep: start')
     subject_n.audio_list()
 
     for file in subject_n.audDeid_files:
-        transcribe_audio = audio(sid,file)
+        transcribe_audio = Audio(sid,file)
         transcribe_audio.read_audio()
         crop_silence(subject_n,transcribe_audio)
         transcribe_audio.slow()
