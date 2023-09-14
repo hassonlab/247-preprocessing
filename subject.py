@@ -428,14 +428,26 @@ class Transcript(Subject):
                     transcript.append(line_list)
         #df = pd.DataFrame(transcript,columns=['token_type','token','onset','offset','speaker','utterance_idx'])
         #df.to_csv('test.csv')
+        self.transcript = pd.DataFrame(transcript,columns=['token_type','token','onset','offset','speaker','utterance_idx'])
         # TODO: Decide what to do with the 'Multiple Speaker' tag
         # TODO: Checks for additional punctuation: '--'
         return
 
-    def add_dt(self):
+    def add_dt(self,onset_day,onset_time):
         """Add audio date-time inofrmation."""
         # From audio header
-
+        #transcript_df = pd.DataFrame(columns=['token_idx', 'token_type', 'token', 'onset_day', 'onset_time', 
+        #                                      'offset_day', 'offset_time', 'utterance_idx', 'audio_file'])
+        for idx,onset in self.transcript.onset.items():
+            time_obj = dt.datetime.strptime(onset,'%H:%M:%S.%f').time()
+            self.transcript.loc[idx, 'onset'] = pd.to_datetime(dt.timedelta(hours=time_obj.hour, minutes=time_obj.minute, 
+                                                                     seconds=time_obj.second, microseconds=time_obj.microsecond).total_seconds(), 
+                                                    unit='s',origin=pd.Timestamp(' '.join([onset_day,onset_time])))
+            time_obj = dt.datetime.strptime(onset,'%H:%M:%S.%f').time()
+            self.transcript.loc[idx, 'offset'] = pd.to_datetime(dt.timedelta(hours=time_obj.hour, minutes=time_obj.minute, 
+                                                                     seconds=time_obj.second, microseconds=time_obj.microsecond).total_seconds(), 
+                                                    unit='s',origin=pd.Timestamp(' '.join([onset_day,onset_time])))
+        breakpoint()
         return
 
     def agg_datum(self):
