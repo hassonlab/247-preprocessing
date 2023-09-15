@@ -113,6 +113,11 @@ class Subject:
         """Retruns list of xml transcript files present in subject directory."""
         xml_files = [f for f in (self.transcriptPath / 'xml/').rglob('[!.]*') if f.is_file()]
         self.xml_files = xml_files
+        
+
+    def create_subject_transcript(self):
+        self.transcript = pd.DataFrame(columns=['token_type','token','onset',
+                                                'offset','speaker','utterance_idx'])
 
 
     def create_summary(self):
@@ -367,9 +372,6 @@ class Transcript(Subject):
 
     def parse_xml(self):
         """Convert Verbit.AI format to our format."""
-        #transcript_df = pd.DataFrame(columns=['token_idx', 'token_type', 'token', 'onset_day', 'onset_time', 
-        #                                      'offset_day', 'offset_time', 'utterance_idx', 'audio_file'])
-
         # Empty list to append to
         transcript = []
         # Increase utterance count for every new utterance
@@ -409,7 +411,7 @@ class Transcript(Subject):
                 # Update speaker
                 label_break = [idx for idx,s in enumerate(line) if ':' in s]
                 if label_break: 
-                    speaker = ''.join(line[:label_break[0]+1]) 
+                    speaker = ''.join(line[:label_break[0]+1]).replace(':','') 
                     del line[:label_break[0]+1]
             for elem in line: 
                 # Split if contains punctuation
@@ -426,29 +428,31 @@ class Transcript(Subject):
                     line_list = [token_type, token, onset, offset, speaker, utterance_idx]
                     # Append to full part transcript
                     transcript.append(line_list)
-        #df = pd.DataFrame(transcript,columns=['token_type','token','onset','offset','speaker','utterance_idx'])
-        #df.to_csv('test.csv')
-        self.transcript = pd.DataFrame(transcript,columns=['token_type','token','onset','offset','speaker','utterance_idx'])
+
+        self.transcript = pd.DataFrame(transcript,columns=['token_type','token','onset',
+                                                           'offset','speaker','utterance_idx'])
         # TODO: Decide what to do with the 'Multiple Speaker' tag
         # TODO: Checks for additional punctuation: '--'
-        return
+        # TODO: These are cropped timings, so they'll need to be re-timed
+
 
     def add_dt(self,onset_day,onset_time):
         """Add audio date-time inofrmation."""
-        # From audio header
-        #transcript_df = pd.DataFrame(columns=['token_idx', 'token_type', 'token', 'onset_day', 'onset_time', 
-        #                                      'offset_day', 'offset_time', 'utterance_idx', 'audio_file'])
-        for idx,onset in self.transcript.onset.items():
-            time_obj = dt.datetime.strptime(onset,'%H:%M:%S.%f').time()
-            self.transcript.loc[idx, 'onset'] = pd.to_datetime(dt.timedelta(hours=time_obj.hour, minutes=time_obj.minute, 
-                                                                     seconds=time_obj.second, microseconds=time_obj.microsecond).total_seconds(), 
-                                                    unit='s',origin=pd.Timestamp(' '.join([onset_day,onset_time])))
-            time_obj = dt.datetime.strptime(onset,'%H:%M:%S.%f').time()
-            self.transcript.loc[idx, 'offset'] = pd.to_datetime(dt.timedelta(hours=time_obj.hour, minutes=time_obj.minute, 
-                                                                     seconds=time_obj.second, microseconds=time_obj.microsecond).total_seconds(), 
-                                                    unit='s',origin=pd.Timestamp(' '.join([onset_day,onset_time])))
-        breakpoint()
-        return
+        # Loop over each token
+        for idx,row in self.transcript.iterrows():
+            # String to time object
+            on = dt.datetime.strptime(row.onset,'%H:%M:%S.%f').time()
+            # Time object to timedelta object, add to origin to get real-world datetime
+            self.transcript.loc[idx, 'onset'] = pd.to_datetime(dt.timedelta(hours=on.hour, minutes=on.minute, 
+                                                                            seconds=on.second, microseconds=on.microsecond)
+                                                                            .total_seconds(), 
+                                                                unit='s',origin=pd.Timestamp(' '.join([onset_day,onset_time])))
+            off = dt.datetime.strptime(row.offset,'%H:%M:%S.%f').time()
+            self.transcript.loc[idx, 'offset'] = pd.to_datetime(dt.timedelta(hours=off.hour, minutes=off.minute, 
+                                                                            seconds=off.second, microseconds=off.microsecond)
+                                                                            .total_seconds(), 
+                                                                unit='s',origin=pd.Timestamp(' '.join([onset_day,onset_time])))
+
 
     def agg_datum(self):
         """Aggregate part-level transcription into full patient datum."""
