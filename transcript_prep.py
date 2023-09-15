@@ -48,7 +48,7 @@ def main():
         subject_n.transcript = subject_n.transcript.append(transcript_file.transcript)
 
     subject_n.transcript = subject_n.transcript.rename_axis('part_idx').sort_values(by=['onset','part_idx']).reset_index()
-    subject_n.transcript.to_csv(subject_n.transcriptPath / '_'.join([subject_n.sid,'transcript.csv']))
+    subject_n.transcript.to_csv(subject_n.transcript_path / '_'.join([subject_n.sid,'transcript.csv']))
     
     subject_n.update_log('04_transcript_prep: end')
 

@@ -15,11 +15,11 @@ from subject import Subject, Audio
 
 def crop_silence(subject_n,transcribe_audio):
     partname = str(transcribe_audio.name).split('_')
-    silenceFile = ''.join([str(subject_n.silencePath),'/',partname[0],
+    silence_file = ''.join([str(subject_n.silence_path),'/',partname[0],
                            '_',partname[1],'_silences.csv'])
-    transcribe_audio.name = ''.join([str(subject_n.audioTranscribePath),'/',
+    transcribe_audio.name = ''.join([str(subject_n.audio_transcribe_path),'/',
                                      partname[0],'_',partname[1],'_transcribe.wav'])
-    transcribe_audio.crop(silenceFile)
+    transcribe_audio.crop_audio(silence_file)
     return 
 
 def main():
@@ -32,11 +32,11 @@ def main():
     subject_n.update_log('03_audio_prep: start')
     subject_n.audio_list()
 
-    for file in subject_n.audDeid_files:
+    for file in subject_n.aud_deid_files:
         transcribe_audio = Audio(sid,file)
         transcribe_audio.read_audio()
         crop_silence(subject_n,transcribe_audio)
-        transcribe_audio.slow()
+        transcribe_audio.slow_audio()
         #audio.denoise_audio(transcribe_audio)
         transcribe_audio.write_audio()
 
