@@ -40,11 +40,11 @@ class Subject:
 
     Attributes:
         sid: The unique subject indentifier, DType: string.
-        basePath: Subject base directory, DType: Posix path.
-        audio512Path: Subject downsampled audio directory, DType: Posix path.
-        audioDeidPath: Subject de-identified audio directory, DType: Posix path.
-        rawEDFPath: Subject raw EDF directory, DType: Posix path.
-        processedEDFPath: Subject processed EDF directory, DType: Posix path.
+        base_path: Subject base directory, DType: Posix path.
+        audio_512_path: Subject downsampled audio directory, DType: Posix path.
+        audio_deid_path: Subject de-identified audio directory, DType: Posix path.
+        ecog_raw_path: Subject raw EDF directory, DType: Posix path.
+        ecog_processed_path: Subject processed EDF directory, DType: Posix path.
     """
 
     def __init__(self,sid):
@@ -58,18 +58,18 @@ class Subject:
         host = socket.gethostname()
 
         if host == 'scotty.pni.Princeton.EDU':
-            self.basePath = Path('/mnt/cup/labs/hasson/247/subjects/' + self.sid)
+            self.base_path = Path('/mnt/cup/labs/hasson/247/subjects/' + self.sid)
         else:
-            self.basePath = Path('/Volumes/hasson/247/subjects/' + self.sid)
+            self.base_path = Path('/Volumes/hasson/247/subjects/' + self.sid)
                 
-        #self.basePath = Path('/Users/baubrey/Documents/pipeline/subjects/' + self.sid)
-        self.audio512Path = self.basePath / 'audio/audio-512Hz/'
-        self.audioDeidPath = self.basePath / 'audio/audio-deid/'
-        self.audioTranscribePath = self.basePath / 'audio/audio-transcribe/'
-        self.rawEDFPath = self.basePath / 'ecog/ecog-raw/'
-        self.processedEDFPath = self.basePath / 'ecog/ecog-processed/'
-        self.silencePath = self.basePath / 'notes/de-id/'
-        self.transcriptPath = self.basePath / 'transcript/'
+        #self.base_path = Path('/Users/baubrey/Documents/pipeline/subjects/' + self.sid)
+        self.audio_512_path = self.base_path / 'audio/audio-512Hz/'
+        self.audio_deid_path = self.base_path / 'audio/audio-deid/'
+        self.audio_transcribe_path = self.base_path / 'audio/audio-transcribe/'
+        self.ecog_raw_path = self.base_path / 'ecog/ecog-raw/'
+        self.ecog_processed_path = self.base_path / 'ecog/ecog-processed/'
+        self.silence_path = self.base_path / 'notes/de-id/'
+        self.transcript_path = self.base_path / 'transcript/'
 
 
     def update_log(self,message):
@@ -78,7 +78,7 @@ class Subject:
         Args:
           message: message written to log file, DType: string.
         """
-        logging.basicConfig(filename=(self.basePath / 'log/example.log'), 
+        logging.basicConfig(filename=(self.base_path / 'log/example.log'), 
                         level=logging.INFO, format='%(asctime)s %(message)s')
         logging.info(message + ", User: %s",getpass.getuser())
 
@@ -94,44 +94,49 @@ class Subject:
     
     def audio_list(self):
         """Retruns list of audio files present in subject directory."""
-        aud512_files = [f for f in self.audio512Path.rglob('[!.]*') if f.is_file()]
-        self.aud512_files = aud512_files
+        audio_512_files = [f for f in self.audio_512_path.rglob('[!.]*') if f.is_file()]
+        self.audio_512_files = audio_512_files
 
-        audDeid_files = [f.name for f in self.audioDeidPath.rglob('[!.]*') if f.is_file()]
-        self.audDeid_files = audDeid_files
+        audio_deid_files = [f.name for f in self.audio_deid_path.rglob('[!.]*') if f.is_file()]
+        self.audio_deid_files = audio_deid_files
 
                 
     def edf_list(self):
         """Retruns list of EDF files present in subject directory."""
 
-        edf_files = [f.name for f in self.rawEDFPath.iterdir() if f.is_file()]
-        self.rawEDFPath = self.rawEDFPath
+        edf_files = [f.name for f in self.ecog_raw_path.iterdir() if f.is_file()]
+        self.ecog_raw_path = self.ecog_raw_path
         self.edf_files = { k: { 'onset': {},'offset': {},'audio_files':{} } for k in edf_files }
 
 
     def transcript_list(self):
         """Retruns list of xml transcript files present in subject directory."""
-        xml_files = [f for f in (self.transcriptPath / 'xml/').rglob('[!.]*') if f.is_file()]
+        xml_files = [f for f in (self.transcript_path / 'xml/').rglob('[!.]*') if f.is_file()]
         self.xml_files = xml_files
+        
+
+    def create_subject_transcript(self):
+        self.transcript = pd.DataFrame(columns=['token_type','token','onset',
+                                                'offset','speaker','utterance_idx'])
 
 
     def create_summary(self):
         """Create summary file for new patient, written to throughout pipeline."""
-        with open(self.basePath / self.sid + '-summary.json', 'w', encoding='utf-8') as f:
+        with open(self.base_path / self.sid + '-summary.json', 'w', encoding='utf-8') as f:
             json.dump(edf_wav_dict, f, ensure_ascii=False, indent=4)
     
 
     def create_dir(self):
         """Create directory and standard sub-directories for a new subject."""
-        self.audio512Path.mkdir(parents=True)
-        self.audioDeidPath.mkdir(parents=True)
-        self.audioTranscribePath.mkdir(parents=True)
-        self.rawEDFPath.mkdir(parents=True)
-        self.processedEDFPath.mkdir(parents=True)
-        (self.basePath / 'anat').mkdir(parents=True)
-        (self.basePath / 'issue').mkdir(parents=True)
-        (self.basePath / 'notes').mkdir(parents=True)
-        (self.basePath / 'transcript/xml').mkdir(parents=True)
+        self.audio_512_path.mkdir(parents=True)
+        self.audio_deid_path.mkdir(parents=True)
+        self.audio_transcribe_path.mkdir(parents=True)
+        self.ecog_raw_path.mkdir(parents=True)
+        self.ecog_processed_path.mkdir(parents=True)
+        (self.base_path / 'anat').mkdir(parents=True)
+        (self.base_path / 'issue').mkdir(parents=True)
+        (self.base_path / 'notes').mkdir(parents=True)
+        (self.base_path / 'transcript/xml').mkdir(parents=True)
 
     
     def transfer_files(self,filetypes):
@@ -154,13 +159,13 @@ class Subject:
         for filetype in filetypes:
             if filetype == 'audio-512Hz':
                 source_path = 'NY'.join([self.sid,"ZoomAudioFilesDownsampled/"])
-                dest_path = str(self.basePath / 'audio/audio-512Hz/')
+                dest_path = str(self.base_path / 'audio/audio-512Hz/')
             elif filetype == 'ecog':
                 source_path = 'NY'.join([self.sid,"Dayfiles/"])
-                dest_path = str(self.basePath / 'ecog/ecog-raw/')
+                dest_path = str(self.base_path / 'ecog/ecog-raw/')
             elif filetype == 'audio-deid':
                 source_path = 'NY'.join([self.sid,"ZoomAudioFilesDeid/"])
-                dest_path = str(self.basePath / 'audio/audio-deid/')
+                dest_path = str(self.base_path / 'audio/audio-deid/')
 
             globus_cmd = ' '.join(['globus', 'login;',
                         'globus', 'transfer', source_endpoint_id + source_path, dest_endpoint_id + dest_path])
@@ -177,17 +182,17 @@ class Ecog(Subject):
     Attributes:
         sid: A string indicating the unique subject indentifier.
         file: Name of edf file, DType: string.
-        basePath: A pathlib PosixPath object pointing to the subject base directory.
-        audio512Path: A pathlib PosixPath object pointing to the subject downsampled audio directory.
-        audioDeidPath: A pathlib PosixPath object pointing to the subject de-identified audio directory.
-        rawEDFPath: A pathlib PosixPath object pointing to the subject raw EDF directory.
-        processedEDFPath: Subject processed EDF directory, DType: Posix path.
-        nonElectrodeId: A list of strings indicating which channel labels are not electrodes.
+        base_path: A pathlib PosixPath object pointing to the subject base directory.
+        audio_512_path: A pathlib PosixPath object pointing to the subject downsampled audio directory.
+        audio_deid_path: A pathlib PosixPath object pointing to the subject de-identified audio directory.
+        ecog_raw_path: A pathlib PosixPath object pointing to the subject raw EDF directory.
+        ecog_processed_path: Subject processed EDF directory, DType: Posix path.
+        non_electrode_id: A list of strings indicating which channel labels are not electrodes.
         expected_sr: Integer of expected sampling rate.
         name: A string of the EDF file name.
 
         ecog_hdr: EDF header data, DType: dict.
-        sampRate: Sampling rate of electrode channels, DType: int.
+        samp_rate: Sampling rate of electrode channels, DType: int.
         edf_enddatetime: End date time of EDF file, DYype: datetime.
         data: EDF channel data, DType: numpy array. (?)
     """
@@ -202,16 +207,16 @@ class Ecog(Subject):
         # Inherit __init__ from patient super class (file directories).       
         Subject.__init__(self,sid)
         self.name = file
-        self.nonElectrodeId = ['SG','EKG','DC']
+        self.non_electrode_id = ['SG','EKG','DC']
     
     expected_sr = 512
     #warnings.simplefilter("ignore")
 
     def read_EDFHeader(self):
         """Read EDF header."""
-        self.ecog_hdr = pyedflib.highlevel.read_edf_header(str(self.rawEDFPath / self.name), 
+        self.ecog_hdr = pyedflib.highlevel.read_edf_header(str(self.ecog_raw_path / self.name), 
                                                            read_annotations=True)
-        self.sampRate = int(self.ecog_hdr['SignalHeaders'][0]['sample_rate'])
+        self.samp_rate = int(self.ecog_hdr['SignalHeaders'][0]['sample_rate'])
 
     
     def end_datetime(self):
@@ -230,12 +235,12 @@ class Ecog(Subject):
         """
         # test value
         offset_sec = 60
-        nChans = range(200,len(self.ecog_hdr['channels']))
-        nSamps = offset_sec*self.sampRate - onset_sec*self.sampRate
-        data = np.empty([len(self.ecog_hdr['channels']),nSamps])
-        ecog_data = pyedflib.EdfReader(str(self.rawEDFPath / self.name))
-        for chan in nChans:
-            data[chan] = ecog_data.readSignal(chan, onset_sec, offset_sec*self.sampRate)
+        chan_nums = range(200,len(self.ecog_hdr['channels']))
+        num_samps = offset_sec*self.samp_rate - onset_sec*self.samp_rate
+        data = np.empty([len(self.ecog_hdr['channels']),num_samps])
+        ecog_data = pyedflib.EdfReader(str(self.ecog_raw_path / self.name))
+        for chan in chan_nums:
+            data[chan] = ecog_data.readSignal(chan, onset_sec, offset_sec*self.samp_rate)
         self.data = data
         ecog_data.close()
 
@@ -247,20 +252,20 @@ class Ecog(Subject):
     def write_edf(self):
         """Write EDF file."""
 
-        sigHdrs = self.ecog_hdr['SignalHeaders']
+        signal_hdrs = self.ecog_hdr['SignalHeaders']
         del self.ecog_hdr['SignalHeaders']
         #phys min and max are swapped for some reason
-        for idx,hdr in enumerate(sigHdrs):
+        for idx,hdr in enumerate(signal_hdrs):
             if hdr['physical_min'] > hdr['physical_max']:
-                sigHdrs[idx]['physical_min'] = -(hdr['physical_min'])
-                sigHdrs[idx]['physical_max'] = -(hdr['physical_max'])
+                signal_hdrs[idx]['physical_min'] = -(hdr['physical_min'])
+                signal_hdrs[idx]['physical_max'] = -(hdr['physical_max'])
 
         # Suppress warnings from edfwriter
         warnings.filterwarnings(action='ignore',category=UserWarning,module=r'.*edfwriter')
         
         # Temp name (?) with datetime
-        outname = str(self.processedEDFPath / self.name)
-        pyedflib.highlevel.write_edf(outname, self.data, sigHdrs, header=self.ecog_hdr)
+        outname = str(self.ecog_processed_path / self.name)
+        pyedflib.highlevel.write_edf(outname, self.data, signal_hdrs, header=self.ecog_hdr)
 
     
 class Audio(Subject):
@@ -271,11 +276,11 @@ class Audio(Subject):
     Attributes:
         sid: Unique subject indentifier, DType: str.
         name: Name of audio file, DType: str.
-        basePath: Subject base directory, DType: PosixPath.
-        audioDeidPath: Subject de-identified audio directory, DType: PosixPath.
-        audioTranscribePath: Subject transcription audio directory, DType: PosixPath.
-        deidAudio: Data from de-identified audio file (input audio), DType: Pydub AudioSegment.
-        transcribeAudio: Audio data for transcription (output audio), DType: Pydub AudioSegment.
+        base_path: Subject base directory, DType: PosixPath.
+        audio_deid_path: Subject de-identified audio directory, DType: PosixPath.
+        audio_transcribe_path: Subject transcription audio directory, DType: PosixPath.
+        deid_audio: Data from de-identified audio file (input audio), DType: Pydub AudioSegment.
+        transcribe_audio: Audio data for transcription (output audio), DType: Pydub AudioSegment.
     """
         
     def __init__(self,sid,file):
@@ -296,16 +301,16 @@ class Audio(Subject):
           filepath: Path to audio file.
         """
         #TODO: option for reading multiple tracks?
-        self.deidAudio = AudioSegment.from_wav(self.audioDeidPath / self.name)
+        self.deid_audio = AudioSegment.from_wav(self.audio_deid_path / self.name)
         #play(audioPart)
         # NOTE: pydub does things in milliseconds
 
 
-    def crop_audio(self,silenceFile):
+    def crop_audio(self,silence_fname):
         """Remove marked segments from audio. For uploading for transcription."""
         # TODO: The deid audio files might be split parts
         # TODO: Do more checks 
-        silences = pd.read_csv(silenceFile,header=None,
+        silences = pd.read_csv(silence_fname,header=None,
                                names=['onset_min','onset_sec','offset_min','offset_sec','silence_type'])
         
         # Change silence times to milliseconds
@@ -327,27 +332,27 @@ class Audio(Subject):
         # Concat segments
         crop_audio = AudioSegment.empty()
         for time in speech_times:
-            crop_audio += self.deidAudio[time[0]:time[1]]
-        self.transcribeAudio = crop_audio
+            crop_audio += self.deid_audio[time[0]:time[1]]
+        self.transcribe_audio = crop_audio
 
     def slow_audio(self):
         """Slow down audio for transcription."""
 
         #slow_speed = 0.95
         #y_slow = librosa.effects.time_stretch(y, rate=slow_speed)
-        sfaud = self.transcribeAudio._spawn(self.transcribeAudio.raw_data, overrides={
-        "frame_rate": int(self.transcribeAudio.frame_rate * 0.95)
-        }).set_frame_rate(self.transcribeAudio.frame_rate)
+        sfaud = self.transcribe_audio._spawn(self.transcribe_audio.raw_data, overrides={
+        "frame_rate": int(self.transcribe_audio.frame_rate * 0.95)
+        }).set_frame_rate(self.transcribe_audio.frame_rate)
         #sfaud = sound_with_altered_frame_rate.set_frame_rate(self.audioTrack.frame_rate)
         #breakpoint()
-        self.transcribeAudio = sfaud
+        self.transcribe_audio = sfaud
 
     def write_audio(self):
         """Write audio signal."""
-        self.transcribeAudio.export(self.audioTranscribePath / self.name, format='wav')
-        with taglib.File(self.audioDeidPath / self.name, save_on_exit=True) as audioFile:
-            audioFile.tags['startDateTime'] = 'startDateTime'
-            audioFile.tags['endDateTime'] = 'endDateTime'
+        self.transcribe_audio.export(self.audio_transcribe_path / self.name, format='wav')
+        with taglib.File(self.audio_deid_path / self.name, save_on_exit=True) as audio_file:
+            audio_file.tags['startDateTime'] = 'startDateTime'
+            audio_file.tags['endDateTime'] = 'endDateTime'
             
     
 class Transcript(Subject):
@@ -367,9 +372,6 @@ class Transcript(Subject):
 
     def parse_xml(self):
         """Convert Verbit.AI format to our format."""
-        #transcript_df = pd.DataFrame(columns=['token_idx', 'token_type', 'token', 'onset_day', 'onset_time', 
-        #                                      'offset_day', 'offset_time', 'utterance_idx', 'audio_file'])
-
         # Empty list to append to
         transcript = []
         # Increase utterance count for every new utterance
@@ -377,7 +379,7 @@ class Transcript(Subject):
         # Punctuation we want to split and maintain from tokens
         punc = '([. |, |! |?])'
         # get element tree
-        tree = ET.parse(self.transcriptPath / 'xml/' / self.name) 
+        tree = ET.parse(self.transcript_path / 'xml/' / self.name) 
         root = tree.getroot()
 
         # Speaker will be 'Unknown' if the first line doesn't contain a speaker label,
@@ -409,7 +411,7 @@ class Transcript(Subject):
                 # Update speaker
                 label_break = [idx for idx,s in enumerate(line) if ':' in s]
                 if label_break: 
-                    speaker = ''.join(line[:label_break[0]+1]) 
+                    speaker = ''.join(line[:label_break[0]+1]).replace(':','') 
                     del line[:label_break[0]+1]
             for elem in line: 
                 # Split if contains punctuation
@@ -426,29 +428,33 @@ class Transcript(Subject):
                     line_list = [token_type, token, onset, offset, speaker, utterance_idx]
                     # Append to full part transcript
                     transcript.append(line_list)
-        #df = pd.DataFrame(transcript,columns=['token_type','token','onset','offset','speaker','utterance_idx'])
-        #df.to_csv('test.csv')
-        self.transcript = pd.DataFrame(transcript,columns=['token_type','token','onset','offset','speaker','utterance_idx'])
+
+        self.transcript = pd.DataFrame(transcript,columns=['token_type','token','onset',
+                                                           'offset','speaker','utterance_idx'])
         # TODO: Decide what to do with the 'Multiple Speaker' tag
         # TODO: Checks for additional punctuation: '--'
-        return
+        # TODO: These are cropped timings, so they'll need to be re-timed
+
 
     def add_dt(self,onset_day,onset_time):
         """Add audio date-time inofrmation."""
-        # From audio header
-        #transcript_df = pd.DataFrame(columns=['token_idx', 'token_type', 'token', 'onset_day', 'onset_time', 
-        #                                      'offset_day', 'offset_time', 'utterance_idx', 'audio_file'])
-        for idx,onset in self.transcript.onset.items():
-            time_obj = dt.datetime.strptime(onset,'%H:%M:%S.%f').time()
-            self.transcript.loc[idx, 'onset'] = pd.to_datetime(dt.timedelta(hours=time_obj.hour, minutes=time_obj.minute, 
-                                                                     seconds=time_obj.second, microseconds=time_obj.microsecond).total_seconds(), 
-                                                    unit='s',origin=pd.Timestamp(' '.join([onset_day,onset_time])))
-            time_obj = dt.datetime.strptime(onset,'%H:%M:%S.%f').time()
-            self.transcript.loc[idx, 'offset'] = pd.to_datetime(dt.timedelta(hours=time_obj.hour, minutes=time_obj.minute, 
-                                                                     seconds=time_obj.second, microseconds=time_obj.microsecond).total_seconds(), 
-                                                    unit='s',origin=pd.Timestamp(' '.join([onset_day,onset_time])))
-        breakpoint()
-        return
+        # Loop over each token
+        for idx,row in self.transcript.iterrows():
+            # String to time object
+            tkn_on = dt.datetime.strptime(row.onset,'%H:%M:%S.%f').time()
+            # Time object to timedelta object
+            tkn_on_delta = dt.timedelta(hours=tkn_on.hour, minutes=tkn_on.minute, seconds=tkn_on.second, 
+                         microseconds=tkn_on.microsecond).total_seconds()
+            # Add to origin (audio onset datetime) to get real-world datetime
+            self.transcript.loc[idx, 'onset'] = pd.to_datetime(tkn_on_delta, unit='s',
+                                                               origin=pd.Timestamp(' '.join([onset_day,onset_time])))
+            
+            tkn_off = dt.datetime.strptime(row.offset,'%H:%M:%S.%f').time()
+            tkn_off_delta = dt.timedelta(hours=tkn_off.hour, minutes=tkn_off.minute, seconds=tkn_off.second, 
+                                         microseconds=tkn_off.microsecond).total_seconds()
+            self.transcript.loc[idx, 'offset'] = pd.to_datetime(tkn_off_delta, unit='s',
+                                                                origin=pd.Timestamp(' '.join([onset_day,onset_time])))
+
 
     def agg_datum(self):
         """Aggregate part-level transcription into full patient datum."""

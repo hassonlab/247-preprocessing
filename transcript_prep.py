@@ -39,13 +39,17 @@ def main():
     subject_n = Subject(sid)
     subject_n.update_log('04_transcript_prep: start')
     subject_n.transcript_list()
+    subject_n.create_subject_transcript()
 
     for file in subject_n.xml_files:
         transcript_file = Transcript(sid,file.name)
         transcript_file.parse_xml()
-        #transcript_file.add_dt()
         get_audio_onset(transcript_file)
+        subject_n.transcript = subject_n.transcript.append(transcript_file.transcript)
 
+    subject_n.transcript = subject_n.transcript.rename_axis('part_idx').sort_values(by=['onset','part_idx']).reset_index()
+    subject_n.transcript.to_csv(subject_n.transcript_path / '_'.join([subject_n.sid,'transcript.csv']))
+    
     subject_n.update_log('04_transcript_prep: end')
 
     return

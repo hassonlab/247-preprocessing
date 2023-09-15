@@ -98,7 +98,7 @@ def quality_check_one(subject_n,ecog_file,aud_f):
         aud_f: Name of audio file, DType: string.
     """
     audio_file = Audio(aud_f)
-    audio_file.read_audio(subject_n.audio512Path / aud_f)
+    audio_file.read_audio(subject_n.audio_512_path / aud_f)
     #TODO: modify audio onset/offset in subject_n instance based on hq_lq relsults?
     edf_wav_shift(ecog_file.data,audio_file.audio_track)
 
