@@ -18,6 +18,7 @@ import warnings
 import taglib
 import inflect
 import re
+import math
 import numpy as np
 import datetime as dt
 import pandas as pd
@@ -436,24 +437,50 @@ class Transcript(Subject):
         # TODO: These are cropped timings, so they'll need to be re-timed
 
 
+    def retime_onset_offset(self,silence_fname):
+        # TODO: the audio cropping function should match this.
+
+        # Silence times to timedelta
+        silences = pd.read_csv(silence_fname,header=None,names=['onset_min','onset_sec','offset_min',
+                                                                'offset_sec','silence_type'])
+
+        silence_onsets = pd.to_timedelta(silences.onset_min,unit='m') + \
+                            pd.to_timedelta(silences.onset_sec,unit='s')
+        silence_offsets = pd.to_timedelta(silences.offset_min,unit='m') + \
+                            pd.to_timedelta(silences.offset_sec,unit='s')
+
+        # TODO: speaker and utterance_idx should be inherited where the silence type is not no speech.
+        for onset,offset in zip(silence_onsets,silence_offsets):
+            self.transcript.loc[self.transcript.onset > self.origin + onset,['onset','offset']] += offset - onset
+
+        rep_val = len(silences.silence_type)
+        silence_df = pd.DataFrame({'token_type' : ['silence']*rep_val, 'token' : silences.silence_type, 
+                      'onset' : self.origin+silence_onsets, 'offset' : self.origin+silence_offsets, 
+                      'speaker' : [None]*rep_val, 'utterance_idx' : [None]*rep_val})
+        
+        self.transcript = pd.concat([self.transcript,silence_df]).sort_values(by='onset').reset_index()
+        
+
     def add_dt(self,onset_day,onset_time):
         """Add audio date-time inofrmation."""
-        # Loop over each token
-        for idx,row in self.transcript.iterrows():
-            # String to time object
-            tkn_on = dt.datetime.strptime(row.onset,'%H:%M:%S.%f').time()
-            # Time object to timedelta object
-            tkn_on_delta = dt.timedelta(hours=tkn_on.hour, minutes=tkn_on.minute, seconds=tkn_on.second, 
-                         microseconds=tkn_on.microsecond).total_seconds()
-            # Add to origin (audio onset datetime) to get real-world datetime
-            self.transcript.loc[idx, 'onset'] = pd.to_datetime(tkn_on_delta, unit='s',
-                                                               origin=pd.Timestamp(' '.join([onset_day,onset_time])))
-            
-            tkn_off = dt.datetime.strptime(row.offset,'%H:%M:%S.%f').time()
-            tkn_off_delta = dt.timedelta(hours=tkn_off.hour, minutes=tkn_off.minute, seconds=tkn_off.second, 
-                                         microseconds=tkn_off.microsecond).total_seconds()
-            self.transcript.loc[idx, 'offset'] = pd.to_datetime(tkn_off_delta, unit='s',
-                                                                origin=pd.Timestamp(' '.join([onset_day,onset_time])))
+
+        # TODO: Consider moving this for flexibility
+        self.origin = pd.Timestamp(' '.join([onset_day,onset_time]))
+
+        # To timestamps based on origin (onset date-time of audio file)
+        self.transcript.onset += self.origin
+        self.transcript.offset += self.origin
+
+
+    def convert_timedelta(self):
+        self.transcript.onset = pd.to_timedelta(self.transcript.onset)
+        self.transcript.offset = pd.to_timedelta(self.transcript.offset) 
+
+
+    def compress_transcript(self,factor):
+        # Adjust for 5% slow down
+        self.transcript.onset = self.transcript.onset-self.transcript.onset*factor
+        self.transcript.offset = self.transcript.offset-self.transcript.offset*factor
 
 
     def agg_datum(self):

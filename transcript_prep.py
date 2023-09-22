@@ -14,7 +14,7 @@ from utils import arg_parse
 from subject import Subject, Transcript
 
 
-def get_audio_onset(transcript_file):
+def get_audio_onset(subject_n,transcript_file):
     # TODO: TEMP
     audiotimestamps = pd.read_csv(''.join(['/Volumes/hasson/247/subjects/',transcript_file.sid,'/audio/',
                                           transcript_file.sid,'_timestamps.csv']))
@@ -27,6 +27,11 @@ def get_audio_onset(transcript_file):
     onset_time = audiotimestamps[' start time'][part_num]
 
     transcript_file.add_dt(onset_day,onset_time)
+
+    partname = str(transcript_file.name).split('_')
+    silence_file = ''.join([str(subject_n.silence_path),'/',partname[0],
+                           '_',partname[1],'_silences.csv'])
+    transcript_file.retime_onset_offset(silence_file)
     return
 
 def main():
@@ -44,7 +49,9 @@ def main():
     for file in subject_n.xml_files:
         transcript_file = Transcript(sid,file.name)
         transcript_file.parse_xml()
-        get_audio_onset(transcript_file)
+        transcript_file.convert_timedelta()
+        transcript_file.compress_transcript(0.05)
+        get_audio_onset(subject_n,transcript_file)
         subject_n.transcript = subject_n.transcript.append(transcript_file.transcript)
 
     subject_n.transcript = subject_n.transcript.rename_axis('part_idx').sort_values(by=['onset','part_idx']).reset_index()
