@@ -13,36 +13,38 @@ import pandas as pd
 from utils import arg_parse
 from subject import Subject, Audio
 
-def crop_silence(subject_n,transcribe_audio):
-    partname = str(transcribe_audio.name).split('_')
-    silence_file = ''.join([str(subject_n.silence_path),'/',partname[0],
-                           '_',partname[1],'_silences.csv'])
-    transcribe_audio.name = ''.join([str(subject_n.audio_transcribe_path),'/',
-                                     partname[0],'_',partname[1],'_transcribe.wav'])
+
+def crop_silence(subject_n, transcribe_audio):
+    partname = str(transcribe_audio.name).split("_")
+    silence_file = subject_n.silence_path / "".join(
+        [partname[0], "_", partname[1], "_silences.csv"])
+    transcribe_audio.name = subject_n.audio_transcribe_path / "".join(
+        [partname[0], "_", partname[1], "_transcribe.wav"])
     transcribe_audio.crop_audio(silence_file)
-    return 
+    return
+
 
 def main():
-
     args = arg_parse()
     sid = args.sid
     input_name = args.input_name
 
     subject_n = Subject(sid)
-    subject_n.update_log('03_audio_prep: start')
+    subject_n.update_log("03_audio_prep: start")
     subject_n.audio_list()
 
     for file in subject_n.aud_deid_files:
-        transcribe_audio = Audio(sid,file)
+        transcribe_audio = Audio(sid, file)
         transcribe_audio.read_audio()
-        crop_silence(subject_n,transcribe_audio)
+        crop_silence(subject_n, transcribe_audio)
         transcribe_audio.slow_audio()
-        #audio.denoise_audio(transcribe_audio)
+        # audio.denoise_audio(transcribe_audio)
         transcribe_audio.write_audio()
 
-    subject_n.update_log('03_audio_prep: end')
+    subject_n.update_log("03_audio_prep: end")
 
     return
+
 
 if __name__ == "__main__":
     main()

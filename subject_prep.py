@@ -11,6 +11,7 @@ Typical usage example:
 from utils import arg_parse
 from subject import Subject
 
+
 def main():
     """Set up file structure."""
     args = arg_parse()
@@ -18,10 +19,12 @@ def main():
 
     subject_n = Subject(sid)
 
-    if not subject_n.base_path.exists(): subject_n.create_dir()
+    if not subject_n.base_path.exists():
+        subject_n.create_dir()
     subject_n.transfer_files()
-    #TODO: move this to end
-    #if not (subject_n.basePath / sid + '-summary.json').exists(): subject_n.create_summary()
+    # TODO: move this to end
+    # if not (subject_n.basePath / sid + '-summary.json').exists(): subject_n.create_summary()
+
 
 if __name__ == "__main__":
     main()
