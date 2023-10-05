@@ -18,6 +18,7 @@ import warnings
 import taglib
 import re
 import math
+import timeit
 import numpy as np
 import datetime as dt
 import pandas as pd
@@ -97,21 +98,27 @@ class Subject:
 
     def audio_list(self):
         """Retruns list of audio files present in subject directory."""
-        audio_512_files = [f for f in self.audio_512_path.rglob("[!.]*") if f.is_file()]
+        audio_512_files = [
+            f for f in self.audio_512_path.rglob("[!.]*/*") if f.is_file()
+        ]
         self.audio_512_files = audio_512_files
 
         audio_deid_files = [
-            f.name for f in self.audio_deid_path.rglob("[!.]*") if f.is_file()
+            f for f in self.audio_deid_path.rglob("[!.]*") if f.is_file()
         ]
         self.audio_deid_files = audio_deid_files
 
     def edf_list(self):
         """Retruns list of EDF files present in subject directory."""
+        # TODO: I don't know if this is consistant across subject (on nyu server)
+        # self.edf_files = [f for f in self.ecog_raw_path.rglob("[!.]*/*")]
+        self.edf_files = [f for f in self.ecog_raw_path.rglob("[!.]*")]
+        # self.ecog_raw_path = self.ecog_raw_path
 
-        edf_files = [f.name for f in self.ecog_raw_path.iterdir() if f.is_file()]
-        self.ecog_raw_path = self.ecog_raw_path
-        self.edf_files = {
-            k: {"onset": {}, "offset": {}, "audio_files": {}} for k in edf_files
+    def make_edf_wav_dict(self):
+        self.alignment = {
+            k.name: {"onset": {}, "offset": {}, "audio_files": {}}
+            for k in self.edf_files
         }
 
     def transcript_list(self):
@@ -147,6 +154,7 @@ class Subject:
         self.audio_transcribe_path.mkdir(parents=True)
         self.ecog_raw_path.mkdir(parents=True)
         self.ecog_processed_path.mkdir(parents=True)
+        (self.base_path / "log").mkdir(parents=True)
         (self.base_path / "anat").mkdir(parents=True)
         (self.base_path / "issue").mkdir(parents=True)
         (self.base_path / "notes").mkdir(parents=True)
@@ -176,7 +184,7 @@ class Subject:
                 "endpoint",
                 "activate",
                 "--web",
-                "6ce834d6-ff8a-11e6-bad1-22000b9a448b;",
+                "6ce834d6-ff8a-11e6-bad1-22000b9a448b",
             ]
         )
         subprocess.run(globus_cmd, shell=True)
@@ -193,6 +201,13 @@ class Subject:
                 source_path = Path(self.nyu_id) / "DeidAudio/DeidAudio/"
                 dest_path = self.base_path / "audio/audio-deid/"
 
+            # id_cmd = " ".join(["globus", "task", "generate-submission-id"])
+            # sub_id = (
+            #    subprocess.check_output(id_cmd, shell=True)
+            #    .decode("utf-8")
+            #    .replace("\n", "")
+            # )
+
             transfer_cmd = " ".join(
                 [
                     "globus",
@@ -200,15 +215,48 @@ class Subject:
                     "-r",
                     source_endpoint_id + str(source_path),
                     dest_endpoint_id + str(dest_path),
+                    "--jmespath",
+                    "task_id",
+                    "--format=UNIX",
                 ]
             )
 
-            subprocess.run(transfer_cmd, shell=True)
+            tsk = (
+                subprocess.check_output(transfer_cmd, shell=True)
+                .decode("utf-8")
+                .replace("\n", "")
+            )
 
-    def rename_files(self, txt: str):
+            # TODO: instead of waiting for each one, should submit all then wait
+            wait_cmd = " ".join(["globus", "task", "wait", tsk])
+            subprocess.run(wait_cmd, shell=True)
+
+    def rename_files(self, newpath, part: str, file: Path, type: str, ext: str):
+        """Rename and/or move files.
+
+        ...
+
+        Attributes:
+            part: file identifier, DType: str.
+            file: file path, DType: PosixPath.
+            type: label indicating file type: DType: str.
+            ext: file extension: DType: str.
+        """
         # Ecog and downsampled audio files are not transferred with correct names
         # TODO: What do we want to do with multiple audio tracks?
-        txt.format(sid="", part="", type="")
+
+        # TODO: Make this an attribute of Subject?
+        txt = "{sid}_Part{part}_{type}.{ext}"
+        # rename files and move directory
+        file.rename(
+            newpath
+            / txt.format(
+                sid=self.sid,
+                part=part,
+                type=type,
+                ext=ext,
+            )
+        )
 
 
 class Ecog(Subject):
@@ -263,25 +311,37 @@ class Ecog(Subject):
         edf_duration = dt.timedelta(seconds=self.ecog_hdr["Duration"])
         self.edf_enddatetime = self.ecog_hdr["startdate"] + edf_duration
 
-    def read_channels(self, onset_sec, offset_sec):
+    def read_channels(self, onset_sec, offset_sec, **chan):
         """Read EDF channels for a certain time frame.
 
         Args:
             onset_sec: Beginning of time frame to read, DType: int.
             offset_sec: End of time frame to read, DType: int.
         """
-        # test value
-        # offset_sec = 60
-        chan_nums = range(200, len(self.ecog_hdr["channels"]))
+
+        start = timeit.default_timer()
+
+        # If channels not specified on function call, read all channels
+        if not chan["start"]:
+            chan["start"] = 0
+        if not chan["end"]:
+            chan["end"] = len(self.ecog_hdr["channels"])
+        chan_nums = range(chan["start"], chan["end"])
+
         num_samps = offset_sec * self.samp_rate - onset_sec * self.samp_rate
-        data = np.empty([len(self.ecog_hdr["channels"]), num_samps])
+        data = np.empty([chan["end"] - chan["start"], num_samps])
+
         ecog_data = pyedflib.EdfReader(str(self.ecog_raw_path / self.name))
-        for chan in chan_nums:
-            data[chan] = ecog_data.readSignal(
+        for idx, chan in enumerate(chan_nums):
+            data[idx] = ecog_data.readSignal(
                 chan, onset_sec, offset_sec * self.samp_rate
             )
         self.data = data
         ecog_data.close()
+
+        stop = timeit.default_timer()
+
+        print("Time: ", stop - start)
 
     def process_ecog(self):
         """Process signal data."""

@@ -28,19 +28,24 @@ def edf_wav_alignment(subject_n: Subject, ecog_file: Ecog):
     # TODO: Save audio timestamps with deid audio (?)
     audiotimestamps = pd.read_csv(
         "".join(
-            "/Volumes/hasson/247/subjects/",
-            subject_n.sid,
-            "/audio/",
-            subject_n.sid,
-            "_timestamps.csv",
+            [
+                "/mnt/cup/labs/hasson/247/subjects/",
+                subject_n.sid,
+                "/audio/",
+                subject_n.sid,
+                "_timestamps.csv",
+            ]
         )
     )
     # NOTE: 798 has 2 mics, 2 audio files listed. This needs to be changed in the audio timestamps code.
     audiotimestamps = audiotimestamps[0::2]
     audiotimestamps = audiotimestamps.reset_index(drop=True)
 
-    subject_n.edf_files[ecog_file.name]["onset"] = str(ecog_file.ecog_hdr["startdate"])
-    subject_n.edf_files[ecog_file.name]["offset"] = str(ecog_file.edf_enddatetime)
+    subject_n.make_edf_wav_dict()
+    subject_n.alignment[ecog_file.name.name]["onset"] = str(
+        ecog_file.ecog_hdr["startdate"]
+    )
+    subject_n.alignment[ecog_file.name.name]["offset"] = str(ecog_file.edf_enddatetime)
 
     for idx in range(0, len(audiotimestamps)):
         aud_startdate = dt.datetime.strptime(
@@ -63,7 +68,7 @@ def edf_wav_alignment(subject_n: Subject, ecog_file: Ecog):
             < aud_enddatetime
             < ecog_file.edf_enddatetime
         ):
-            subject_n.edf_files[ecog_file.name]["audio_files"].update(
+            subject_n.alignment[ecog_file.name.name]["audio_files"].update(
                 {
                     audiotimestamps["File"][idx].split("/")[-1]: {
                         "onset": str(aud_startdatetime),
@@ -73,7 +78,7 @@ def edf_wav_alignment(subject_n: Subject, ecog_file: Ecog):
             )
 
 
-def get_metadata(subject_n: Subject, file):
+def get_metadata(subject_n: Subject, file) -> Ecog:
     """Read header data and calculate EDF end datetime.
 
     Args:
@@ -86,7 +91,7 @@ def get_metadata(subject_n: Subject, file):
     ecog_file.read_EDFHeader()
     ecog_file.end_datetime()
 
-    return
+    return ecog_file
 
 
 def ecog_to_part(subject_n: Subject, ecog_file: Ecog, aud_f: str):
@@ -98,11 +103,11 @@ def ecog_to_part(subject_n: Subject, ecog_file: Ecog, aud_f: str):
         aud_f: Name of audio file, DType: string.
     """
     aud_startdatetime = dt.datetime.strptime(
-        subject_n.edf_files[ecog_file.name]["audio_files"][aud_f]["onset"],
+        subject_n.alignment[ecog_file.name.name]["audio_files"][aud_f]["onset"],
         "%Y-%m-%d %H:%M:%S",
     )
     aud_enddatetime = dt.datetime.strptime(
-        subject_n.edf_files[ecog_file.name]["audio_files"][aud_f]["offset"],
+        subject_n.alignment[ecog_file.name.name]["audio_files"][aud_f]["offset"],
         "%Y-%m-%d %H:%M:%S",
     )
 
@@ -113,10 +118,7 @@ def ecog_to_part(subject_n: Subject, ecog_file: Ecog, aud_f: str):
         int((aud_enddatetime - ecog_file.ecog_hdr["startdate"]).total_seconds()),
         ecog_file.ecog_hdr["Duration"],
     )
-
-    ecog_file.read_channels(onset_sec, offset_sec)
-    return
-
+    ecog_file.read_channels(onset_sec, offset_sec, start=1, end=3)
 
 def quality_check_one(subject_n: Subject, ecog_file: Ecog, aud_f: str):
     """First quality checks on subject data.
@@ -157,9 +159,9 @@ def main():
     for file in subject_n.edf_files:
         # Read original EDF
         ecog_file = get_metadata(subject_n, file)
-        subject_n = edf_wav_alignment(subject_n, ecog_file)
+        edf_wav_alignment(subject_n, ecog_file)
 
-        for aud_f in subject_n.edf_files[ecog_file.name]["audio_files"]:
+        for aud_f in subject_n.alignment[ecog_file.name.name]["audio_files"]:
             ecog_to_part(subject_n, ecog_file, aud_f)
             # TODO: the header also needs to be updated with a new duration
 
