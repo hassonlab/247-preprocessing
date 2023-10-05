@@ -326,6 +326,7 @@ class Ecog(Subject):
             chan["start"] = 0
         if not chan["end"]:
             chan["end"] = len(self.ecog_hdr["channels"])
+
         chan_nums = range(chan["start"], chan["end"])
 
         num_samps = offset_sec * self.samp_rate - onset_sec * self.samp_rate
@@ -333,6 +334,7 @@ class Ecog(Subject):
 
         ecog_data = pyedflib.EdfReader(str(self.ecog_raw_path / self.name))
         for idx, chan in enumerate(chan_nums):
+            # TODO: parallelize
             data[idx] = ecog_data.readSignal(
                 chan, onset_sec, offset_sec * self.samp_rate
             )
@@ -617,7 +619,7 @@ class Transcript(Subject):
         self.transcript = (
             pd.concat([self.transcript, silence_df])
             .sort_values(by="onset")
-            .reset_index()
+            .reset_index(drop=True)
         )
 
     def add_dt(self, onset_day, onset_time):
