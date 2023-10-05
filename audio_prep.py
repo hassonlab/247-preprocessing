@@ -14,12 +14,14 @@ from utils import arg_parse
 from subject import Subject, Audio
 
 
-def crop_silence(subject_n, transcribe_audio):
+def crop_silence(subject_n: Subject, transcribe_audio: Audio):
     partname = str(transcribe_audio.name).split("_")
     silence_file = subject_n.silence_path / "".join(
-        [partname[0], "_", partname[1], "_silences.csv"])
+        [partname[0], "_", partname[1], "_silences.csv"]
+    )
     transcribe_audio.name = subject_n.audio_transcribe_path / "".join(
-        [partname[0], "_", partname[1], "_transcribe.wav"])
+        [partname[0], "_", partname[1], "_transcribe.wav"]
+    )
     transcribe_audio.crop_audio(silence_file)
     return
 
