@@ -18,6 +18,7 @@ import warnings
 import taglib
 import re
 import math
+import timeit
 import numpy as np
 import datetime as dt
 import pandas as pd
@@ -97,7 +98,9 @@ class Subject:
 
     def audio_list(self):
         """Retruns list of audio files present in subject directory."""
-        audio_512_files = [f for f in self.audio_512_path.rglob("[!.]*/*") if f.is_file()]
+        audio_512_files = [
+            f for f in self.audio_512_path.rglob("[!.]*/*") if f.is_file()
+        ]
         self.audio_512_files = audio_512_files
 
         audio_deid_files = [
@@ -108,13 +111,15 @@ class Subject:
     def edf_list(self):
         """Retruns list of EDF files present in subject directory."""
         # TODO: I don't know if this is consistant across subject (on nyu server)
-        self.edf_files = [f for f in self.ecog_raw_path.rglob("[!.]*/*")]
+        # self.edf_files = [f for f in self.ecog_raw_path.rglob("[!.]*/*")]
+        self.edf_files = [f for f in self.ecog_raw_path.rglob("[!.]*")]
         # self.ecog_raw_path = self.ecog_raw_path
 
-        # TODO: move this for flexibility?
-        # self.edf_files = {
-        #    k: {"onset": {}, "offset": {}, "audio_files": {}} for k in edf_files
-        # }
+    def make_edf_wav_dict(self):
+        self.alignment = {
+            k.name: {"onset": {}, "offset": {}, "audio_files": {}}
+            for k in self.edf_files
+        }
 
     def transcript_list(self):
         """Retruns list of xml transcript files present in subject directory."""
@@ -149,6 +154,7 @@ class Subject:
         self.audio_transcribe_path.mkdir(parents=True)
         self.ecog_raw_path.mkdir(parents=True)
         self.ecog_processed_path.mkdir(parents=True)
+        (self.base_path / "log").mkdir(parents=True)
         (self.base_path / "anat").mkdir(parents=True)
         (self.base_path / "issue").mkdir(parents=True)
         (self.base_path / "notes").mkdir(parents=True)
@@ -305,25 +311,37 @@ class Ecog(Subject):
         edf_duration = dt.timedelta(seconds=self.ecog_hdr["Duration"])
         self.edf_enddatetime = self.ecog_hdr["startdate"] + edf_duration
 
-    def read_channels(self, onset_sec, offset_sec):
+    def read_channels(self, onset_sec, offset_sec, **chan):
         """Read EDF channels for a certain time frame.
 
         Args:
             onset_sec: Beginning of time frame to read, DType: int.
             offset_sec: End of time frame to read, DType: int.
         """
-        # test value
-        # offset_sec = 60
-        chan_nums = range(200, len(self.ecog_hdr["channels"]))
+
+        start = timeit.default_timer()
+
+        # If channels not specified on function call, read all channels
+        if not chan["start"]:
+            chan["start"] = 0
+        if not chan["end"]:
+            chan["end"] = len(self.ecog_hdr["channels"])
+        chan_nums = range(chan["start"], chan["end"])
+
         num_samps = offset_sec * self.samp_rate - onset_sec * self.samp_rate
-        data = np.empty([len(self.ecog_hdr["channels"]), num_samps])
+        data = np.empty([chan["end"] - chan["start"], num_samps])
+
         ecog_data = pyedflib.EdfReader(str(self.ecog_raw_path / self.name))
-        for chan in chan_nums:
-            data[chan] = ecog_data.readSignal(
+        for idx, chan in enumerate(chan_nums):
+            data[idx] = ecog_data.readSignal(
                 chan, onset_sec, offset_sec * self.samp_rate
             )
         self.data = data
         ecog_data.close()
+
+        stop = timeit.default_timer()
+
+        print("Time: ", stop - start)
 
     def process_ecog(self):
         """Process signal data."""

@@ -20,6 +20,8 @@ def main():
     new_id = args.sid
 
     subject_n = Subject(new_id)
+    subject_n.update_log("01_patient_prep: start")
+    breakpoint()
     subject_n.nyu_id = nyu_id
 
     if not subject_n.base_path.exists():
@@ -29,7 +31,9 @@ def main():
     subject_n.edf_list()
     # TODO: naming
     for part, file in enumerate(sorted(subject_n.edf_files)):
-        subject_n.rename_files(file.parents[1], str(part + 1).zfill(3), file, "ecog-raw", "EDF")
+        subject_n.rename_files(
+            file.parents[1], str(part + 1).zfill(3), file, "ecog-raw", "EDF"
+        )
         # At this point, the directory should be empty and can be removed
         while file.exists():
             time.sleep(1)
@@ -38,14 +42,20 @@ def main():
     # NOTE: We can get the correct naming when we run downsampling/deid on nyu server
     subject_n.audio_list()
     for part, file in enumerate(sorted(subject_n.audio_512_files)):
-        subject_n.rename_files(file.parents[1], str(part + 1).zfill(3), file, "audio-512Hz", "wav")
+        subject_n.rename_files(
+            file.parents[1], str(part + 1).zfill(3), file, "audio-512Hz", "wav"
+        )
         while file.exists():
             time.sleep(1)
         file.parents[0].rmdir()
 
     for part, file in enumerate(sorted(subject_n.audio_deid_files)):
-        subject_n.rename_files(file.parents[0], str(part + 1).zfill(3), file, "audio-deid", "wav")
-        # At this point, the directory should be empty and can be removed
+        subject_n.rename_files(
+            file.parents[0], str(part + 1).zfill(3), file, "audio-deid", "wav"
+        )
+
+    subject_n.update_log("01_patient_prep: end")
+
     # TODO: move this to end
     # if not (subject_n.basePath / sid + '-summary.json').exists(): subject_n.create_summary()
 
