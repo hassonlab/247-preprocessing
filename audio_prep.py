@@ -11,17 +11,23 @@ Typical usage example:
 
 import pandas as pd
 from utils import arg_parse
-from subject import Subject, Audio
+from subject import Subject, Audio, Silence
 
 
 def crop_silence(subject_n: Subject, transcribe_audio: Audio):
-    partname = str(transcribe_audio.name).split("_")
-    silence_file = subject_n.silence_path / "".join(
+    partname = str(transcribe_audio.name.name).split("_")
+
+    silence_fname = subject_n.silence_path / "".join(
         [partname[0], "_", partname[1], "_silences.csv"]
     )
     transcribe_audio.name = subject_n.audio_transcribe_path / "".join(
         [partname[0], "_", partname[1], "_transcribe.wav"]
     )
+
+    silence_file = Silence(silence_fname)
+    silence_file.read_silence()
+    silence_file.calc_silence()
+
     transcribe_audio.crop_audio(silence_file)
     return
 
@@ -35,7 +41,7 @@ def main():
     subject_n.update_log("03_audio_prep: start")
     subject_n.audio_list()
 
-    for file in subject_n.aud_deid_files:
+    for file in subject_n.audio_deid_files:
         transcribe_audio = Audio(sid, file)
         transcribe_audio.read_audio()
         crop_silence(subject_n, transcribe_audio)
@@ -44,6 +50,7 @@ def main():
         transcribe_audio.write_audio()
 
     subject_n.update_log("03_audio_prep: end")
+    breakpoint()
 
     return
 

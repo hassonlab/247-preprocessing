@@ -11,7 +11,7 @@ Typical usage example:
 """
 import pandas as pd
 from utils import arg_parse
-from subject import Subject, Transcript
+from subject import Subject, Transcript, Silence
 
 
 def get_audio_onset(subject_n: Subject, transcript_file: Transcript):
@@ -19,7 +19,7 @@ def get_audio_onset(subject_n: Subject, transcript_file: Transcript):
     audiotimestamps = pd.read_csv(
         "".join(
             [
-                "/Volumes/hasson/247/subjects/",
+                "/mnt/cup/labs/hasson/247/subjects/",
                 transcript_file.sid,
                 "/audio/",
                 transcript_file.sid,
@@ -31,6 +31,7 @@ def get_audio_onset(subject_n: Subject, transcript_file: Transcript):
     audiotimestamps = audiotimestamps[0::2]
     audiotimestamps = audiotimestamps.sort_values(by=["start date", " start time"])
     audiotimestamps = audiotimestamps.reset_index(drop=True)
+
     part_num = int(transcript_file.name.split("_")[1][-3:])
     onset_day = audiotimestamps["start date"][part_num]
     onset_time = audiotimestamps[" start time"][part_num]
@@ -38,9 +39,14 @@ def get_audio_onset(subject_n: Subject, transcript_file: Transcript):
     transcript_file.add_dt(onset_day, onset_time)
 
     partname = str(transcript_file.name).split("_")
-    silence_file = subject_n.silence_path / "".join(
+    silence_fname = subject_n.silence_path / "".join(
         [partname[0], "_", partname[1], "_silences.csv"]
     )
+
+    silence_file = Silence(silence_fname)
+    silence_file.read_silence()
+    silence_file.calc_silence()
+
     transcript_file.agg_silences(silence_file)
     return
 
@@ -53,7 +59,6 @@ def main():
     input_name = args.input_name
 
     subject_n = Subject(sid)
-    breakpoint()
     subject_n.update_log("04_transcript_prep: start")
     subject_n.transcript_list()
     subject_n.create_subject_transcript()
@@ -71,6 +76,7 @@ def main():
         .sort_values(by=["onset", "part_idx"])
         .reset_index()
     )
+    
     subject_n.transcript.to_csv(
         subject_n.transcript_path / "_".join([subject_n.sid, "transcript.csv"])
     )

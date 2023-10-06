@@ -405,34 +405,16 @@ class Audio(Subject):
         # play(audioPart)
         # NOTE: pydub does things in milliseconds
 
-    def crop_audio(self, silence_fname):
+    def crop_audio(self, silence_file):
         """Remove marked segments from audio. For uploading for transcription."""
         # TODO: The deid audio files might be split parts
         # TODO: Do more checks
-        silences = pd.read_csv(
-            silence_fname,
-            header=None,
-            names=[
-                "onset_min",
-                "onset_sec",
-                "offset_min",
-                "offset_sec",
-                "silence_type",
-            ],
-        )
-
-        # Change silence times to milliseconds
-        silence_onsets = []
-        silence_offsets = []
-        for _, row in silences.iterrows():
-            onset_ms = 1000 * ((row.onset_min * 60) + row.onset_sec)
-            offset_ms = 1000 * ((row.offset_min * 60) + row.offset_sec)
-            silence_onsets.append(onset_ms)
-            silence_offsets.append(offset_ms)
 
         # Get speech times from silence times
-        speech_onsets = np.array(silence_offsets)
-        speech_offsets = np.roll(silence_onsets, -1)
+        speech_onsets = np.array(silence_file.silence_offsets.view(np.int64) / int(1e6))
+        speech_offsets = np.roll(
+            silence_file.silence_onsets.view(np.int64) / int(1e6), -1
+        )
 
         # Remove consecutive non-speech labels
         speech_idxs = np.where((speech_offsets - speech_onsets) != 0)
@@ -571,43 +553,26 @@ class Transcript(Subject):
         # TODO: Decide what to do with the 'Multiple Speaker' tag
         # TODO: Checks for additional punctuation: '--'
 
-    def agg_silences(self, silence_fname):
+    def agg_silences(self, silence_file):
         # TODO: the audio cropping function should match this.
 
-        # Silence times to timedelta
-        silences = pd.read_csv(
-            silence_fname,
-            header=None,
-            names=[
-                "onset_min",
-                "onset_sec",
-                "offset_min",
-                "offset_sec",
-                "silence_type",
-            ],
-        )
-
-        silence_onsets = pd.to_timedelta(
-            silences.onset_min, unit="m"
-        ) + pd.to_timedelta(silences.onset_sec, unit="s")
-        silence_offsets = pd.to_timedelta(
-            silences.offset_min, unit="m"
-        ) + pd.to_timedelta(silences.offset_sec, unit="s")
-
         # TODO: speaker and utterance_idx should be inherited where the silence type is not no speech.
-        for onset, offset in zip(silence_onsets, silence_offsets):
+        # Re-time transcript to adjust for cropped portions (silences)
+        for onset, offset in zip(
+            silence_file.silence_onsets, silence_file.silence_offsets
+        ):
             self.transcript.loc[
                 self.transcript.onset > self.origin + onset, ["onset", "offset"]
             ] += (offset - onset)
 
         # TODO: consider separating retiming and adding silences to transcript for flexibility.
-        rep_val = len(silences.silence_type)
+        rep_val = len(silence_file.silences.silence_type)
         silence_df = pd.DataFrame(
             {
                 "token_type": ["silence"] * rep_val,
-                "token": silences.silence_type,
-                "onset": self.origin + silence_onsets,
-                "offset": self.origin + silence_offsets,
+                "token": silence_file.silences.silence_type,
+                "onset": self.origin + silence_file.silence_onsets,
+                "offset": self.origin + silence_file.silence_offsets,
                 "speaker": [None] * rep_val,
                 "utterance_idx": [None] * rep_val,
             }
@@ -639,3 +604,38 @@ class Transcript(Subject):
         self.transcript.offset = (
             self.transcript.offset - self.transcript.offset * factor
         )
+
+
+class Silence:
+    """Transcript corresponding to a specific audio file.
+
+    ...
+
+    Attributes:
+        fid: A pathlib PosixPath object pointing to the transcript.
+    """
+
+    def __init__(self, file):
+        # Inherit __init__ from patient super class.
+        self.name = file
+
+    def read_silence(self):
+        self.silences = pd.read_csv(
+            self.name,
+            header=None,
+            names=[
+                "onset_min",
+                "onset_sec",
+                "offset_min",
+                "offset_sec",
+                "silence_type",
+            ],
+        )
+
+    def calc_silence(self):
+        self.silence_onsets = pd.to_timedelta(
+            self.silences.onset_min, unit="m"
+        ) + pd.to_timedelta(self.silences.onset_sec, unit="s")
+        self.silence_offsets = pd.to_timedelta(
+            self.silences.offset_min, unit="m"
+        ) + pd.to_timedelta(self.silences.offset_sec, unit="s")
