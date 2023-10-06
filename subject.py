@@ -25,6 +25,7 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from pydub import AudioSegment
+from multiprocessing import Pool
 
 # import tracemalloc
 # import timeit
@@ -319,13 +320,12 @@ class Ecog(Subject):
             offset_sec: End of time frame to read, DType: int.
         """
 
-        start = timeit.default_timer()
-
         # If channels not specified on function call, read all channels
         if not chan["start"]:
             chan["start"] = 0
         if not chan["end"]:
             chan["end"] = len(self.ecog_hdr["channels"])
+
         chan_nums = range(chan["start"], chan["end"])
 
         num_samps = offset_sec * self.samp_rate - onset_sec * self.samp_rate
@@ -333,15 +333,14 @@ class Ecog(Subject):
 
         ecog_data = pyedflib.EdfReader(str(self.ecog_raw_path / self.name))
         for idx, chan in enumerate(chan_nums):
+            # TODO: parallelize
             data[idx] = ecog_data.readSignal(
-                chan, onset_sec, offset_sec * self.samp_rate
+                chan,
+                onset_sec,
+                (offset_sec * self.samp_rate - onset_sec * self.samp_rate),
             )
         self.data = data
         ecog_data.close()
-
-        stop = timeit.default_timer()
-
-        print("Time: ", stop - start)
 
     def process_ecog(self):
         """Process signal data."""
@@ -617,7 +616,7 @@ class Transcript(Subject):
         self.transcript = (
             pd.concat([self.transcript, silence_df])
             .sort_values(by="onset")
-            .reset_index()
+            .reset_index(drop=True)
         )
 
     def add_dt(self, onset_day, onset_time):
