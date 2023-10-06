@@ -21,7 +21,8 @@ def main():
 
     subject_n = Subject(new_id)
     subject_n.update_log("01_patient_prep: start")
-    breakpoint()
+
+    subject_n.read_config()
     subject_n.nyu_id = nyu_id
 
     if not subject_n.base_path.exists():

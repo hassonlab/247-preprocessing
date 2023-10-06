@@ -26,6 +26,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from pydub import AudioSegment
 from multiprocessing import Pool
+from configparser import ConfigParser
 
 # import tracemalloc
 # import timeit
@@ -116,18 +117,18 @@ class Subject:
         self.edf_files = [f for f in self.ecog_raw_path.rglob("[!.]*")]
         # self.ecog_raw_path = self.ecog_raw_path
 
-    def make_edf_wav_dict(self):
-        self.alignment = {
-            k.name: {"onset": {}, "offset": {}, "audio_files": {}}
-            for k in self.edf_files
-        }
-
     def transcript_list(self):
         """Retruns list of xml transcript files present in subject directory."""
         xml_files = [
             f for f in (self.transcript_path / "xml/").rglob("[!.]*") if f.is_file()
         ]
         self.xml_files = xml_files
+
+    def make_edf_wav_dict(self):
+        self.alignment = {
+            k.name: {"onset": {}, "offset": {}, "audio_files": {}}
+            for k in self.edf_files
+        }
 
     def create_subject_transcript(self):
         self.transcript = pd.DataFrame(
@@ -173,7 +174,7 @@ class Subject:
         # We use Globus Transfer API to transfer large EDF files
         # Using Globus-CLI works, but there's probably a better way to do this
 
-        # Fill in
+        # TODO: Don't hardcode endpoints + paths.
         source_endpoint_id = "28e1658e-6ce6-11e9-bf46-0e4a062367b8:"
         dest_endpoint_id = "6ce834d6-ff8a-11e6-bad1-22000b9a448b:"
 
@@ -232,7 +233,7 @@ class Subject:
             wait_cmd = " ".join(["globus", "task", "wait", tsk])
             subprocess.run(wait_cmd, shell=True)
 
-    def rename_files(self, newpath, part: str, file: Path, type: str, ext: str):
+    def rename_files(self, newpath, part: str, file: Path, type: str, ext: str, txt = "{sid}_Part{part}_{type}.{ext}"):
         """Rename and/or move files.
 
         ...
@@ -246,8 +247,6 @@ class Subject:
         # Ecog and downsampled audio files are not transferred with correct names
         # TODO: What do we want to do with multiple audio tracks?
 
-        # TODO: Make this an attribute of Subject?
-        txt = "{sid}_Part{part}_{type}.{ext}"
         # rename files and move directory
         file.rename(
             newpath
@@ -258,6 +257,14 @@ class Subject:
                 ext=ext,
             )
         )
+
+    def read_config(self):
+        config = ConfigParser() 
+        config.read('config.ini')
+        for key in config['Transfer']:
+            print(key)
+
+        self.config = config
 
 
 class Ecog(Subject):
