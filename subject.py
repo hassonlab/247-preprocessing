@@ -60,21 +60,12 @@ class Subject:
         """
         self.sid = sid
 
-        host = socket.gethostname()
+        # host = socket.gethostname()
 
-        if host == "scotty.pni.Princeton.EDU":
-            self.base_path = Path("/mnt/cup/labs/hasson/247/subjects") / self.sid
-        else:
-            self.base_path = Path("/Volumes/hasson/247/subjects/") / self.sid
-
-        # self.base_path = Path('/Users/baubrey/Documents/pipeline/subjects/' + self.sid)
-        self.audio_512_path = self.base_path / "audio/audio-512Hz/"
-        self.audio_deid_path = self.base_path / "audio/audio-deid/"
-        self.audio_transcribe_path = self.base_path / "audio/audio-transcribe/"
-        self.ecog_raw_path = self.base_path / "ecog/ecog-raw/"
-        self.ecog_processed_path = self.base_path / "ecog/ecog-processed/"
-        self.silence_path = self.base_path / "notes/de-id/"
-        self.transcript_path = self.base_path / "transcript/"
+        # if host == "scotty.pni.Princeton.EDU":
+        #     self.base_path = Path(self.scotty_prefix_path) / self.base_path / self.sid
+        # else:
+        #     self.base_path = Path(self.user_prefix_path) / self.base_path / self.sid
 
     def update_log(self, message: str):
         """Update logger for each step in the pipeline.
@@ -151,16 +142,9 @@ class Subject:
 
     def create_dir(self):
         """Create directory and standard sub-directories for a new subject."""
-        self.audio_512_path.mkdir(parents=True)
-        self.audio_deid_path.mkdir(parents=True)
-        self.audio_transcribe_path.mkdir(parents=True)
-        self.ecog_raw_path.mkdir(parents=True)
-        self.ecog_processed_path.mkdir(parents=True)
-        (self.base_path / "log").mkdir(parents=True)
-        (self.base_path / "anat").mkdir(parents=True)
-        (self.base_path / "issue").mkdir(parents=True)
-        (self.base_path / "notes").mkdir(parents=True)
-        (self.base_path / "transcript/xml").mkdir(parents=True)
+        for i in vars(self): 
+            attr = getattr(self, i)
+            if isinstance(attr, Path): attr.mkdir(parents=True)
 
     def transfer_files(self, filetypes: list = ["ecog", "audio-512Hz", "audio-deid"]):
         """Transfer files to patient directory.
@@ -174,10 +158,7 @@ class Subject:
         # We use Globus Transfer API to transfer large EDF files
         # Using Globus-CLI works, but there's probably a better way to do this
 
-        # TODO: Don't hardcode endpoints + paths.
-        source_endpoint_id = "28e1658e-6ce6-11e9-bf46-0e4a062367b8:"
-        dest_endpoint_id = "6ce834d6-ff8a-11e6-bad1-22000b9a448b:"
-
+        # TODO: not waiting for activation?
         globus_cmd = " ".join(
             [
                 "globus",
@@ -186,37 +167,32 @@ class Subject:
                 "endpoint",
                 "activate",
                 "--web",
-                "6ce834d6-ff8a-11e6-bad1-22000b9a448b",
+                self.dest_endpoint_id,
             ]
         )
         subprocess.run(globus_cmd, shell=True)
 
-        # TODO: fix this
         for filetype in filetypes:
             if filetype == "audio-512Hz":
-                source_path = Path(self.nyu_id) / "ZoomAudioFilesDownsampled/"
-                dest_path = self.base_path / "audio/audio-512Hz/"
-            elif filetype == "ecog":
-                source_path = Path(self.nyu_id) / "Dayfiles/"
-                dest_path = self.base_path / "ecog/ecog-raw/"
+                source_path = self.nyu_downsampled_audio_path
+                dest_path = self.downsampled_audio_path
             elif filetype == "audio-deid":
-                source_path = Path(self.nyu_id) / "DeidAudio/DeidAudio/"
-                dest_path = self.base_path / "audio/audio-deid/"
+                source_path = self.nyu_deid_audio_path
+                dest_path = self.deid_audio_path
+            elif filetype == "ecog":
+                source_path = self.nyu_ecog_path
+                dest_path = self.ecog_path
 
-            # id_cmd = " ".join(["globus", "task", "generate-submission-id"])
-            # sub_id = (
-            #    subprocess.check_output(id_cmd, shell=True)
-            #    .decode("utf-8")
-            #    .replace("\n", "")
-            # )
+            source = self.source_endpoint_id + ":" + str(source_path)
+            dest = self.dest_endpoint_id + ":" + str(dest_path)
 
             transfer_cmd = " ".join(
                 [
                     "globus",
                     "transfer",
                     "-r",
-                    source_endpoint_id + str(source_path),
-                    dest_endpoint_id + str(dest_path),
+                    source,
+                    dest,
                     "--jmespath",
                     "task_id",
                     "--format=UNIX",
@@ -233,7 +209,7 @@ class Subject:
             wait_cmd = " ".join(["globus", "task", "wait", tsk])
             subprocess.run(wait_cmd, shell=True)
 
-    def rename_files(self, newpath, part: str, file: Path, type: str, ext: str, txt = "{sid}_Part{part}_{type}.{ext}"):
+    def rename_files(self, newpath, file: Path, part: str, type: str, ext: str):
         """Rename and/or move files.
 
         ...
@@ -250,7 +226,7 @@ class Subject:
         # rename files and move directory
         file.rename(
             newpath
-            / txt.format(
+            / self.file_name_format.format(
                 sid=self.sid,
                 part=part,
                 type=type,
@@ -261,10 +237,10 @@ class Subject:
     def read_config(self):
         config = ConfigParser() 
         config.read('config.ini')
-        for key in config['Transfer']:
-            print(key)
 
-        self.config = config
+        self.__dict__.update([(i[0],Path(i[1]) / self.sid) for i in config.items('PtonPaths')])
+
+        return config
 
 
 class Ecog(Subject):

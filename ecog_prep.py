@@ -14,6 +14,7 @@ import datetime as dt
 from subject import Subject, Ecog, Audio
 from utils import arg_parse
 from utils import edf_wav_shift
+from pathlib import Path
 
 
 def edf_wav_alignment(subject_n: Subject, ecog_file: Ecog):
@@ -118,7 +119,7 @@ def ecog_to_part(subject_n: Subject, ecog_file: Ecog, aud_f: str):
         int((aud_enddatetime - ecog_file.ecog_hdr["startdate"]).total_seconds()),
         ecog_file.ecog_hdr["Duration"],
     )
-    ecog_file.read_channels(onset_sec, offset_sec, start=1, end=3)
+    ecog_file.read_channels(onset_sec, offset_sec, start=0, end=10)
 
 def quality_check_one(subject_n: Subject, ecog_file: Ecog, aud_f: str):
     """First quality checks on subject data.
@@ -152,7 +153,16 @@ def main():
     input_name = args.input_name
 
     subject_n = Subject(sid)
+
+    # Get items from config file
+    config = subject_n.read_config()
+
     subject_n.update_log("02_ecog_prep: start")
+
+    subject_n.__dict__.update({'ecog_raw_path':Path(config['PtonSubpaths']['ecog_raw_path'])})
+    subject_n.__dict__.update({'ecog_processed_path':Path(config['PtonSubpaths']['ecog_processed_path'])})
+    subject_n.__dict__.update({'audio_512_path':Path(config['PtonSubpaths']['audio_512_path'])})
+
     subject_n.edf_list()
     # mypath = Path('/Users/baubrey/Documents/pipeline/subjects/' + sid + header.input_subpath)
 
