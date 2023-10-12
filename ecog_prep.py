@@ -11,7 +11,7 @@ Typical usage example:
 """
 import pandas as pd
 import datetime as dt
-from subject import Subject, Ecog, Audio
+from subject import Subject, Ecog, Audio, Config
 from utils import arg_parse
 from utils import edf_wav_shift
 from pathlib import Path
@@ -26,7 +26,7 @@ def edf_wav_alignment(subject_n: Subject, ecog_file: Ecog):
     """
 
     # Align with audio
-    # TODO: Save audio timestamps with deid audio (?)
+    # TODO: TEMP. Save audio timestamps with deid audio (?)
     audiotimestamps = pd.read_csv(
         "".join(
             [
@@ -88,7 +88,12 @@ def get_metadata(subject_n: Subject, file) -> Ecog:
     """
 
     # with (subject_n.inputEDFPath / file).open('rb') as fid:
-    ecog_file = Ecog(subject_n.sid, file)
+    ecog_file = Ecog("EcogRaw", subject_n.sid, file)
+
+    ecog_file.in_path = subject_n.filenames["ecog_raw"].parent
+    ecog_file.out_path = subject_n.filenames["ecog_processed"].parent
+    ecog_file.aud_path = subject_n.filenames["audio_downsampled"].parent
+
     ecog_file.read_EDFHeader()
     ecog_file.end_datetime()
 
@@ -119,7 +124,8 @@ def ecog_to_part(subject_n: Subject, ecog_file: Ecog, aud_f: str):
         int((aud_enddatetime - ecog_file.ecog_hdr["startdate"]).total_seconds()),
         ecog_file.ecog_hdr["Duration"],
     )
-    ecog_file.read_channels(onset_sec, offset_sec, start=0, end=10)
+    ecog_file.read_channels(onset_sec, offset_sec, start=0, end=1)
+
 
 def quality_check_one(subject_n: Subject, ecog_file: Ecog, aud_f: str):
     """First quality checks on subject data.
@@ -130,7 +136,8 @@ def quality_check_one(subject_n: Subject, ecog_file: Ecog, aud_f: str):
         aud_f: Name of audio file, DType: string.
     """
     audio_file = Audio(aud_f)
-    audio_file.read_audio(subject_n.audio_512_path / aud_f)
+    audio_file.in_path = subject_n.filenames["audio_downsampled"].parent
+    audio_file.read_audio()
     # TODO: modify audio onset/offset in subject_n instance based on hq_lq relsults?
     edf_wav_shift(ecog_file.data, audio_file.audio_track)
 
@@ -154,20 +161,22 @@ def main():
 
     subject_n = Subject(sid)
 
-    # Get items from config file
-    config = subject_n.read_config()
+    # TODO: load config yaml, create config, check for any differences (?)
+    config = Config(sid)
+    config.configure_paths()
+    subject_n.filenames = config.filenames
+    # config.base_path = subject_n.base_path
+    # config.read_config()
 
+    # TODO: log in config
     subject_n.update_log("02_ecog_prep: start")
 
-    subject_n.__dict__.update({'ecog_raw_path':Path(config['PtonSubpaths']['ecog_raw_path'])})
-    subject_n.__dict__.update({'ecog_processed_path':Path(config['PtonSubpaths']['ecog_processed_path'])})
-    subject_n.__dict__.update({'audio_512_path':Path(config['PtonSubpaths']['audio_512_path'])})
-
+    # Get files to loop through
     subject_n.edf_list()
-    # mypath = Path('/Users/baubrey/Documents/pipeline/subjects/' + sid + header.input_subpath)
 
     for file in subject_n.edf_files:
         # Read original EDF
+
         ecog_file = get_metadata(subject_n, file)
         edf_wav_alignment(subject_n, ecog_file)
 
@@ -177,7 +186,7 @@ def main():
 
             # TEMP naming conversion... this will be the name of aud_f in the future
             part_num = aud_f.split("_")[1]
-            aud_f = sid + "_Part" + part_num + "_audio512Hz.wav"
+            aud_f = sid + "_Part" + part_num + "_audio-512Hz.wav"
 
             quality_check_one(subject_n, ecog_file, aud_f)
             ecog_file.process_ecog()

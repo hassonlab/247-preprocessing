@@ -10,9 +10,8 @@ Typical usage example:
 
 import time
 from utils import arg_parse
-from subject import Subject
+from subject import Subject, Config
 from pathlib import Path
-
 
 
 def main():
@@ -21,28 +20,27 @@ def main():
     nyu_id = args.nyu_id
     new_id = args.sid
 
-    subject_n = Subject(new_id)
+    config = Config(new_id, nyu_id)
+    config.configure_paths()
+    config.configure_paths_nyu()
 
-    # Get items from config file
-    config = subject_n.read_config()
-    subject_n.__dict__.update([(i[0],subject_n.base_path / Path(i[1])) for i in config.items('PtonSubpaths')])
+    subject_n = Subject(new_id, create_config=True)
+    subject_n.filenames = config.filenames
+    subject_n.__dict__.update(config.nyu_paths.items())
 
-    if not subject_n.base_path.exists():
+    if not config.base_path.exists():
         subject_n.create_dir()
 
+    config.write_config()
     subject_n.update_log("01_patient_prep: start")
 
-    subject_n.__dict__.update([(i[0],nyu_id / Path(i[1])) for i in config.items('NYUPaths')])
-    subject_n.__dict__.update(config.items('Transfer'))
-    subject_n.__dict__.update(config.items('NameFormats'))
-
-    subject_n.transfer_files(["audio-512Hz"])
+    # subject_n.transfer_files()
 
     subject_n.edf_list()
     # TODO: naming
     for part, file in enumerate(sorted(subject_n.edf_files)):
         subject_n.rename_files(
-            file.parents[1], file, str(part + 1).zfill(3), "ecog-raw", "EDF"
+            file.parents[1], file, str(part + 1).zfill(3), "ecog_raw", rename=True
         )
         # At this point, the directory should be empty and can be removed
         while file.exists():
@@ -53,15 +51,21 @@ def main():
     subject_n.audio_list()
     for part, file in enumerate(sorted(subject_n.audio_512_files)):
         subject_n.rename_files(
-            file.parents[1], file, str(part + 1).zfill(3), "audio-512Hz", "wav"
+            file.parents[1],
+            file,
+            str(part + 1).zfill(3),
+            "audio_downsampled",
+            rename=True,
         )
-        while file.exists():
+
+        # TODO: needs more testing
+        while any(file.parents[0].iterdir()):
             time.sleep(1)
         file.parents[0].rmdir()
 
     for part, file in enumerate(sorted(subject_n.audio_deid_files)):
         subject_n.rename_files(
-            file.parents[0], file, str(part + 1).zfill(3), "audio-deid", "wav"
+            file.parents[0], file, str(part + 1).zfill(3), "audio_deid", rename=True
         )
 
     subject_n.update_log("01_patient_prep: end")
