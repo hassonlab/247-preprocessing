@@ -11,7 +11,7 @@ Typical usage example:
 """
 import pandas as pd
 from utils import arg_parse
-from subject import Subject, Transcript
+from subject import Subject, Transcript, Silence, Config
 
 
 def get_audio_onset(subject_n: Subject, transcript_file: Transcript):
@@ -19,7 +19,7 @@ def get_audio_onset(subject_n: Subject, transcript_file: Transcript):
     audiotimestamps = pd.read_csv(
         "".join(
             [
-                "/Volumes/hasson/247/subjects/",
+                "/mnt/cup/labs/hasson/247/subjects/",
                 transcript_file.sid,
                 "/audio/",
                 transcript_file.sid,
@@ -31,16 +31,21 @@ def get_audio_onset(subject_n: Subject, transcript_file: Transcript):
     audiotimestamps = audiotimestamps[0::2]
     audiotimestamps = audiotimestamps.sort_values(by=["start date", " start time"])
     audiotimestamps = audiotimestamps.reset_index(drop=True)
-    part_num = int(transcript_file.name.split("_")[1][-3:])
-    onset_day = audiotimestamps["start date"][part_num]
-    onset_time = audiotimestamps[" start time"][part_num]
+
+    part_num = transcript_file.file.name.split("_")[1][-3:]
+    onset_day = audiotimestamps["start date"][int(part_num)]
+    onset_time = audiotimestamps[" start time"][int(part_num)]
 
     transcript_file.add_dt(onset_day, onset_time)
 
-    partname = str(transcript_file.name).split("_")
-    silence_file = subject_n.silence_path / "".join(
-        [partname[0], "_", partname[1], "_silences.csv"]
+    silence_fname = subject_n.rename_files(
+        subject_n.filenames["silence"].parent, "file", part_num, "silence"
     )
+
+    silence_file = Silence(subject_n.filenames["silence"].parent / silence_fname)
+    silence_file.read_silence()
+    silence_file.calc_silence()
+
     transcript_file.agg_silences(silence_file)
     return
 
@@ -52,14 +57,18 @@ def main():
     sid = args.sid
     input_name = args.input_name
 
+    config = Config(sid)
+    config.configure_paths()
+
     subject_n = Subject(sid)
-    breakpoint()
+    subject_n.filenames = config.filenames
+
     subject_n.update_log("04_transcript_prep: start")
     subject_n.transcript_list()
     subject_n.create_subject_transcript()
 
     for file in subject_n.xml_files:
-        transcript_file = Transcript(sid, file.name)
+        transcript_file = Transcript(sid, file)
         transcript_file.parse_xml()
         transcript_file.convert_timedelta()
         transcript_file.compress_transcript(0.05)
@@ -71,8 +80,10 @@ def main():
         .sort_values(by=["onset", "part_idx"])
         .reset_index()
     )
+
     subject_n.transcript.to_csv(
-        subject_n.transcript_path / "_".join([subject_n.sid, "transcript.csv"])
+        subject_n.filenames["transcript"].parent
+        / "_".join([subject_n.sid, "transcript.csv"])
     )
 
     subject_n.update_log("04_transcript_prep: end")

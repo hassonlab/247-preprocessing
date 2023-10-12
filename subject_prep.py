@@ -10,7 +10,8 @@ Typical usage example:
 
 import time
 from utils import arg_parse
-from subject import Subject
+from subject import Subject, Config
+from pathlib import Path
 
 
 def main():
@@ -19,20 +20,27 @@ def main():
     nyu_id = args.nyu_id
     new_id = args.sid
 
-    subject_n = Subject(new_id)
-    subject_n.update_log("01_patient_prep: start")
-    breakpoint()
-    subject_n.nyu_id = nyu_id
+    config = Config(new_id, nyu_id)
+    config.configure_paths()
+    config.configure_paths_nyu()
 
-    if not subject_n.base_path.exists():
+    subject_n = Subject(new_id, create_config=True)
+    subject_n.filenames = config.filenames
+    subject_n.__dict__.update(config.nyu_paths.items())
+
+    if not config.base_path.exists():
         subject_n.create_dir()
-    subject_n.transfer_files(["ecog"])
+
+    config.write_config()
+    subject_n.update_log("01_patient_prep: start")
+
+    # subject_n.transfer_files()
 
     subject_n.edf_list()
     # TODO: naming
     for part, file in enumerate(sorted(subject_n.edf_files)):
         subject_n.rename_files(
-            file.parents[1], str(part + 1).zfill(3), file, "ecog-raw", "EDF"
+            file.parents[1], file, str(part + 1).zfill(3), "ecog_raw", rename=True
         )
         # At this point, the directory should be empty and can be removed
         while file.exists():
@@ -43,15 +51,21 @@ def main():
     subject_n.audio_list()
     for part, file in enumerate(sorted(subject_n.audio_512_files)):
         subject_n.rename_files(
-            file.parents[1], str(part + 1).zfill(3), file, "audio-512Hz", "wav"
+            file.parents[1],
+            file,
+            str(part + 1).zfill(3),
+            "audio_downsampled",
+            rename=True,
         )
-        while file.exists():
+
+        # TODO: needs more testing
+        while any(file.parents[0].iterdir()):
             time.sleep(1)
         file.parents[0].rmdir()
 
     for part, file in enumerate(sorted(subject_n.audio_deid_files)):
         subject_n.rename_files(
-            file.parents[0], str(part + 1).zfill(3), file, "audio-deid", "wav"
+            file.parents[0], file, str(part + 1).zfill(3), "audio_deid", rename=True
         )
 
     subject_n.update_log("01_patient_prep: end")

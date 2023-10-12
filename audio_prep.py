@@ -11,17 +11,24 @@ Typical usage example:
 
 import pandas as pd
 from utils import arg_parse
-from subject import Subject, Audio
+from subject import Subject, Audio, Silence, Config
 
 
 def crop_silence(subject_n: Subject, transcribe_audio: Audio):
-    partname = str(transcribe_audio.name).split("_")
-    silence_file = subject_n.silence_path / "".join(
-        [partname[0], "_", partname[1], "_silences.csv"]
+    partname = str(transcribe_audio.name.name).split("_")
+    part = partname[1][-3:]
+    # TODO: change this
+    silence_fname = subject_n.rename_files(
+        subject_n.filenames["silence"].parent, "file", part, "silence"
     )
-    transcribe_audio.name = subject_n.audio_transcribe_path / "".join(
-        [partname[0], "_", partname[1], "_transcribe.wav"]
+    transcribe_audio.file = subject_n.filenames["audio_transcribe"].parent / subject_n.rename_files(
+        subject_n.filenames["audio_transcribe"].parent, "file", part, "audio_transcribe"
     )
+
+    silence_file = Silence(subject_n.filenames["silence"].parent / silence_fname)
+    silence_file.read_silence()
+    silence_file.calc_silence()
+
     transcribe_audio.crop_audio(silence_file)
     return
 
@@ -31,12 +38,17 @@ def main():
     sid = args.sid
     input_name = args.input_name
 
+    config = Config(sid)
+    config.configure_paths()
+
     subject_n = Subject(sid)
+    subject_n.filenames = config.filenames
     subject_n.update_log("03_audio_prep: start")
     subject_n.audio_list()
 
-    for file in subject_n.aud_deid_files:
-        transcribe_audio = Audio(sid, file)
+    for file in subject_n.audio_deid_files:
+        transcribe_audio = Audio(file)
+        transcribe_audio.in_path = subject_n.filenames["audio_downsampled"].parent
         transcribe_audio.read_audio()
         crop_silence(subject_n, transcribe_audio)
         transcribe_audio.slow_audio()
