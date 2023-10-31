@@ -11,7 +11,10 @@ Typical usage example:
 """
 import pandas as pd
 from utils import arg_parse
-from subject import Subject, Transcript, Silence, Config
+from subject import Subject
+from transcript import Transcript
+from silence import Silence
+from config import Config
 
 
 def get_audio_onset(subject_n: Subject, transcript_file: Transcript):

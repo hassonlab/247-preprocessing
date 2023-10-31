@@ -1,7 +1,7 @@
 """Prepare ECoG data from new subject.
 
 This is the second module to run in the 24/7 preprocessing pipeline. It must be run
-after patient_prep.py and is strongly recommended to be run before audio_prep.py. 
+after subject_prep.py and is strongly recommended to be run before audio_prep.py. 
 Splits ECoG  data into parts matching audio files, checks for alignment between 
 downsampled audio file and audio channel in ECoG data, processes electrode channels.
 
@@ -11,10 +11,12 @@ Typical usage example:
 """
 import pandas as pd
 import datetime as dt
-from subject import Subject, Ecog, Audio, Config
+from subject import Subject
+from ecog import Ecog
+from audio import Audio
+from config import Config
 from utils import arg_parse
 from utils import edf_wav_shift
-from pathlib import Path
 
 
 def edf_wav_alignment(subject_n: Subject, ecog_file: Ecog):
