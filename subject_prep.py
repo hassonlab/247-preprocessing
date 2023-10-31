@@ -10,8 +10,8 @@ Typical usage example:
 
 import time
 from utils import arg_parse
-from subject import Subject, Config
-from pathlib import Path
+from subject import Subject
+from config import Config
 
 
 def main():

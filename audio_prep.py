@@ -9,9 +9,11 @@ Typical usage example:
     audio_prep.py --sid sub-001
 """
 
-import pandas as pd
 from utils import arg_parse
-from subject import Subject, Audio, Silence, Config
+from subject import Subject
+from audio import Audio
+from silence import Silence
+from config import Config
 
 
 def crop_silence(subject_n: Subject, transcribe_audio: Audio):
@@ -21,7 +23,9 @@ def crop_silence(subject_n: Subject, transcribe_audio: Audio):
     silence_fname = subject_n.rename_files(
         subject_n.filenames["silence"].parent, "file", part, "silence"
     )
-    transcribe_audio.file = subject_n.filenames["audio_transcribe"].parent / subject_n.rename_files(
+    transcribe_audio.file = subject_n.filenames[
+        "audio_transcribe"
+    ].parent / subject_n.rename_files(
         subject_n.filenames["audio_transcribe"].parent, "file", part, "audio_transcribe"
     )
 
