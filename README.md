@@ -36,16 +36,14 @@ Run for a specific file:\
 ## Data Classes 
 The pipeline utilizes 5 custom classes that help to define and operate on the various types of data and metadata integrated into the pipeline.
 
-### Class: Subject 
+### Documentation for classes:
+#### [Subject](markdowns/subject.md)
 This class defines a subject.\
-Properties of this class are those that relate to 24/7 data on a whole subject level.\
-` subject.create_dir() `: Create new directory for the processing of a new subject, and all associated child directories.\
-` subject.transfer_files() `: Interact with Globus Transfer API to transfer files from endpoint to endpoint.\
-` subject.rename_files() `: Enforce naming convention on files.\
-` subject.audio_list() `: Returns a list of all audio files in subject directory.\
-` subject.edf_list() `: Returns a list of all EDF files in subject directory.\
-` subject.transcript_list() `: Returns a list of all transcript files in subject directory.\
-` subject.make_edf_wav_dict() `: Create a dictionary that provides information about corresponding ECoG and audio files.\
-` subject.create_subject_transcript() `: Create empty pandas DataFrame with columns for transcripts (Prob link to Wiki to define columns/what they're for).\
-` subject.update_log() `: Update subject log file.\
-In the standard pipeline, Step 02: Subject Preparation initiates a new instance of the class Subject.
+Properties of this class are those that relate to 24/7 data on a whole subject level.
+#### [ECoG](markdowns/ecog.md)
+Properties of this class are those that relate to ECoG data on an individual file level.
+#### [Audio](markdowns/audio.md) 
+Properties of this class are those that relate to audio data on an individual file level.
+#### [Transcript](markdowns/transcript.md) 
+#### [Silence](markdowns/silence.md) 
+#### [Config](markdowns/config.md) 
