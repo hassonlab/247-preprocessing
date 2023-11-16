@@ -10,10 +10,10 @@ Typical usage example:
 """
 
 from utils import arg_parse
-from subject import Subject
-from audio import Audio
-from silence import Silence
-from config import Config
+from classes.subject import Subject
+from classes.audio import Audio
+from classes.silence import Silence
+from classes.config import Config
 
 
 def crop_silence(subject_n: Subject, transcribe_audio: Audio):

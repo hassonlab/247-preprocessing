@@ -11,10 +11,10 @@ Typical usage example:
 """
 import pandas as pd
 import datetime as dt
-from subject import Subject
-from ecog import Ecog
-from audio import Audio
-from config import Config
+from classes.subject import Subject
+from classes.ecog import Ecog
+from classes.audio import Audio
+from classes.config import Config
 from utils import arg_parse
 from utils import edf_wav_shift
 
