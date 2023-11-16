@@ -90,6 +90,26 @@ def transcript_list()
 
 Retruns list of xml transcript files present in subject directory.
 
+<a id="subject.Subject.make_edf_wav_dict"></a>
+
+#### make\_edf\_wav\_dict
+
+```python
+def make_edf_wav_dict()
+```
+
+Start a dictionary for alignment between EDF and WAV files.
+
+<a id="subject.Subject.create_subject_transcript"></a>
+
+#### create\_subject\_transcript
+
+```python
+def create_subject_transcript()
+```
+
+Create an empty, subject-level transcript that will be filled with each part-level transcript.
+
 <a id="subject.Subject.create_summary"></a>
 
 #### create\_summary

@@ -1,6 +1,10 @@
 # 24/7 Preprocessing
+See the [Wiki](../../wiki) for information on the project.\
+There are 2 main ways to utilize this code.
+1. [Standard 24/7 pipeline flow](#24/7-main-project)
+2. [Implement the data classes in a 24/7 side project](#24/7-side-projects)
 
-## Standard 24/7 Pipeline Flow
+## 24/7 Main Project
 Prepare data collected under the 24/7 project for analysis.
 
 ### Getting Started
@@ -33,8 +37,11 @@ Run for a specific file:\
 #### Step 06: Subject summarization
 ...
 
+## 24/7 Side Projects
+For projects that use data collected under the 24/7 project, but require different data preparation steps.
+
 ## Data Classes 
-The pipeline utilizes 5 custom classes that help to define and operate on the various types of data and metadata integrated into the pipeline.
+Both [24/7 Main Project](#24/7-main-project) and [24/7 Side Projects](#24/7-side-projects) utilize 5 custom classes that help to define and operate on the various types of data and metadata integrated into the pipeline.
 
 ### Documentation for classes:
 #### [Subject](markdowns/subject.md)
