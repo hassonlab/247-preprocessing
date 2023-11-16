@@ -49,3 +49,6 @@ Properties of this class are those that relate to 24/7 data on a whole subject l
 ` subject.create_subject_transcript() `: Create empty pandas DataFrame with columns for transcripts (Prob link to Wiki to define columns/what they're for).\
 ` subject.update_log() `: Update subject log file.\
 In the standard pipeline, Step 02: Subject Preparation initiates a new instance of the class Subject.
+
+### Class: ECoG
+[ecog class](https://github.com/hassonlab/247-preprocessing/markdowns/ecog.md)
