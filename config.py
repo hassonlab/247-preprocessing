@@ -4,11 +4,18 @@ from pathlib import Path
 
 class Config:
     def __init__(self, sid, nyu_id=None):
+        """Initializes the instance based on subject identifier.
+
+        Args:
+          sid (str): Identifies subject.
+          nyu_id (str, optional): Subject identifier on NYU server.
+        """
         self.sid = sid
         if nyu_id:
             self.nyu_id = nyu_id
 
     def configure_paths(self):
+        """Configurable filepaths."""
         self.base_path = Path("/mnt/cup/labs/hasson/247/subjects/") / self.sid
         self.filenames = {
             "audio_downsampled": self.base_path
@@ -28,6 +35,7 @@ class Config:
         }
 
     def configure_paths_nyu(self):
+        """Configurable filepaths on NYU server."""
         nyu_base_path = Path(self.nyu_id)
         self.nyu_paths = {
             "nyu_base_path": nyu_base_path,
@@ -39,10 +47,12 @@ class Config:
         }
 
     def write_config(self):
+        """Write YAML file containing configured information for each subject."""
         with open(self.base_path / "test.yaml", "w") as file:
             yaml.dump(self, file)
 
     def read_config(self):
+        """Read YAML file containing configured information for each subject."""
         with open(self.base_path / "test.yaml", "r") as file:
             # TODO: safe_load (?) might have to change how I'm writing the file
             self.config = yaml.load(file, Loader=yaml.BaseLoader)
