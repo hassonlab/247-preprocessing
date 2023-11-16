@@ -51,4 +51,4 @@ Properties of this class are those that relate to 24/7 data on a whole subject l
 In the standard pipeline, Step 02: Subject Preparation initiates a new instance of the class Subject.
 
 ### Class: ECoG
-[ecog class](https://github.com/hassonlab/247-preprocessing/markdowns/ecog.md)
+[ecog class](markdowns/ecog.md)
