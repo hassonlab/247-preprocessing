@@ -11,28 +11,29 @@ class Ecog:
     ...
 
     Attributes:
-        sid: A string indicating the unique subject indentifier.
-        file: Name of edf file, DType: string.
-        base_path: A pathlib PosixPath object pointing to the subject base directory.
-        audio_512_path: A pathlib PosixPath object pointing to the subject downsampled audio directory.
-        audio_deid_path: A pathlib PosixPath object pointing to the subject de-identified audio directory.
-        ecog_raw_path: A pathlib PosixPath object pointing to the subject raw EDF directory.
-        ecog_processed_path: Subject processed EDF directory, DType: Posix path.
-        non_electrode_id: A list of strings indicating which channel labels are not electrodes.
-        expected_sr: Integer of expected sampling rate.
-        name: A string of the EDF file name.
+        sid (str): The unique subject indentifier.
+        file (str): Name of edf file.
+        base_path (PosixPath): Subject base directory.
+        audio_512_path (PosixPath): Subject downsampled audio directory.
+        audio_deid_path (PosixPath): Subject de-identified audio directory.
+        ecog_raw_path (PosixPath): Subject raw EDF directory.
+        ecog_processed_path (PosixPath): Subject processed EDF directory.
+        non_electrode_id (:obj:`list` of :obj:`str`): Which channel labels are not electrodes.
+        expected_sr (int): Expected sampling rate.
+        name (str): EDF filename.
 
-        ecog_hdr: EDF header data, DType: dict.
-        samp_rate: Sampling rate of electrode channels, DType: int.
-        edf_enddatetime: End date time of EDF file, DYype: datetime.
-        data: EDF channel data, DType: numpy array. (?)
+        ecog_hdr (dict): EDF header data.
+        samp_rate (int): Sampling rate of electrode channels.
+        edf_enddatetime (datetime): End date time of EDF file.
+        data (NumPy array): EDF channel data.
     """
 
     def __init__(self, config_type: str, sid: str, file):
         """Initializes the instance based on subject identifier and file identifier.
 
         Args:
-          sid: Identifies subject, DType: string.
+          sid (str): Identifies subject.
+          file (str): Filename.
         """
 
         # Inherit __init__ from patient super class (file directories).
@@ -62,8 +63,9 @@ class Ecog:
         """Read EDF channels for a certain time frame.
 
         Args:
-            onset_sec: Beginning of time frame to read, DType: int.
-            offset_sec: End of time frame to read, DType: int.
+            onset_sec (int): Beginning of time frame to read.
+            offset_sec (int): End of time frame to read.
+            **chan: Keyword arguments 'start' and/or 'end'.
         """
 
         # If channels not specified on function call, read all channels

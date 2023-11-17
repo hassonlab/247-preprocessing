@@ -9,10 +9,15 @@ class Transcript:
     ...
 
     Attributes:
-        fid: A pathlib PosixPath object pointing to the transcript.
+        file (PosixPath): Path to the transcript.
     """
 
     def __init__(self, sid: str, file):
+        """Initializes the instance based on file identifier.
+
+        Args:
+          file (PosixPath): Path to the transcript.
+        """
         # Inherit __init__ from patient super class.
         # Subject.__init__(self, sid)
         self.file = file
@@ -107,6 +112,11 @@ class Transcript:
         # TODO: Checks for additional punctuation: '--'
 
     def agg_silences(self, silence_file):
+        """Add silence information to transcript.
+
+        Args:
+            silence_file (DataFrame): Silence types, onsets, offsets.
+        """
         # TODO: the audio cropping function should match this.
 
         # TODO: speaker and utterance_idx should be inherited where the silence type is not no speech.
@@ -138,7 +148,12 @@ class Transcript:
         )
 
     def add_dt(self, onset_day, onset_time):
-        """Add audio date-time inofrmation."""
+        """Add audio date-time inofrmation.
+
+        Args:
+            onset_day (str)
+            onset_time (str)
+        """
 
         # TODO: Consider moving this for flexibility
         self.origin = pd.Timestamp(" ".join([onset_day, onset_time]))
@@ -148,10 +163,16 @@ class Transcript:
         self.transcript.offset += self.origin
 
     def convert_timedelta(self):
+        """Convert to timedelta."""
         self.transcript.onset = pd.to_timedelta(self.transcript.onset)
         self.transcript.offset = pd.to_timedelta(self.transcript.offset)
 
     def compress_transcript(self, factor):
+        """Compress transcript.
+
+        Args:
+            factor (float): how much to compress times by.
+        """
         # Adjust for 5% slow down
         self.transcript.onset = self.transcript.onset - self.transcript.onset * factor
         self.transcript.offset = (

@@ -2,19 +2,25 @@ import pandas as pd
 
 
 class Silence:
-    """Transcript corresponding to a specific audio file.
+    """File containing marked silences corresponding to a specific audio file.
 
     ...
 
     Attributes:
-        fid: A pathlib PosixPath object pointing to the transcript.
+        file (PosixPath): Path to the silence file.
     """
 
     def __init__(self, file):
+        """Initializes the instance based on file identifier.
+
+        Args:
+          file (PosixPath): Path to file.
+        """
         # Inherit __init__ from patient super class.
         self.file = file
 
     def read_silence(self):
+        """Read silence file to Pandas DataFrame"""
         self.silences = pd.read_csv(
             self.file,
             header=None,
@@ -28,6 +34,7 @@ class Silence:
         )
 
     def calc_silence(self):
+        """Convert times in table to timedelta"""
         self.silence_onsets = pd.to_timedelta(
             self.silences.onset_min, unit="m"
         ) + pd.to_timedelta(self.silences.onset_sec, unit="s")

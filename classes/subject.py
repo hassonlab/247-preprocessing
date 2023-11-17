@@ -108,12 +108,14 @@ class Subject:
         self.xml_files = xml_files
 
     def make_edf_wav_dict(self):
+        """Start a dictionary for alignment between EDF and WAV files."""
         self.alignment = {
             k.name: {"onset": {}, "offset": {}, "audio_files": {}}
             for k in self.edf_files
         }
 
     def create_subject_transcript(self):
+        """Create an empty, subject-level transcript that will be filled with each part-level transcript."""
         self.transcript = pd.DataFrame(
             columns=[
                 "token_type",

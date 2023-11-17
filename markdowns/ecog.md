@@ -16,21 +16,21 @@ Information and data for each patient ECoG file.
 
 **Attributes**:
 
-- `sid` - A string indicating the unique subject indentifier.
-- `file` - Name of edf file, DType: string.
-- `base_path` - A pathlib PosixPath object pointing to the subject base directory.
-- `audio_512_path` - A pathlib PosixPath object pointing to the subject downsampled audio directory.
-- `audio_deid_path` - A pathlib PosixPath object pointing to the subject de-identified audio directory.
-- `ecog_raw_path` - A pathlib PosixPath object pointing to the subject raw EDF directory.
-- `ecog_processed_path` - Subject processed EDF directory, DType: Posix path.
-- `non_electrode_id` - A list of strings indicating which channel labels are not electrodes.
-- `expected_sr` - Integer of expected sampling rate.
-- `name` - A string of the EDF file name.
+- `sid` _str_ - The unique subject indentifier.
+- `file` _str_ - Name of edf file.
+- `base_path` _PosixPath_ - Subject base directory.
+- `audio_512_path` _PosixPath_ - Subject downsampled audio directory.
+- `audio_deid_path` _PosixPath_ - Subject de-identified audio directory.
+- `ecog_raw_path` _PosixPath_ - Subject raw EDF directory.
+- `ecog_processed_path` _PosixPath_ - Subject processed EDF directory.
+- `non_electrode_id` _:obj:`list` of :obj:`str`_ - Which channel labels are not electrodes.
+- `expected_sr` _int_ - Expected sampling rate.
+- `name` _str_ - EDF filename.
   
-- `ecog_hdr` - EDF header data, DType: dict.
-- `samp_rate` - Sampling rate of electrode channels, DType: int.
-- `edf_enddatetime` - End date time of EDF file, DYype: datetime.
-- `data` - EDF channel data, DType: numpy array. (?)
+- `ecog_hdr` _dict_ - EDF header data.
+- `samp_rate` _int_ - Sampling rate of electrode channels.
+- `edf_enddatetime` _datetime_ - End date time of EDF file.
+- `data` _NumPy array_ - EDF channel data.
 
 <a id="ecog.Ecog.__init__"></a>
 
@@ -44,7 +44,8 @@ Initializes the instance based on subject identifier and file identifier.
 
 **Arguments**:
 
-- `sid` - Identifies subject, DType: string.
+- `sid` _str_ - Identifies subject.
+- `file` _str_ - Filename.
 
 <a id="ecog.Ecog.read_EDFHeader"></a>
 
@@ -78,8 +79,9 @@ Read EDF channels for a certain time frame.
 
 **Arguments**:
 
-- `onset_sec` - Beginning of time frame to read, DType: int.
-- `offset_sec` - End of time frame to read, DType: int.
+- `onset_sec` _int_ - Beginning of time frame to read.
+- `offset_sec` _int_ - End of time frame to read.
+- `**chan` - Keyword arguments 'start' and/or 'end'.
 
 <a id="ecog.Ecog.process_ecog"></a>
 
