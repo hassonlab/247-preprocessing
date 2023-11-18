@@ -41,7 +41,7 @@ Run for a specific file:\
 For projects that use data collected under the 24/7 project, but require different data preparation steps.
 
 ## Data Classes 
-Both [24/7 Main Project](#main-project) and [24/7 Side Projects](#side-projects) utilize 5 custom classes that help to define and operate on the various types of data and metadata integrated into the pipeline.
+Both [24/7 Main Project](#main-project) and [24/7 Side Projects](#side-projects) utilize 6 custom classes that help to define and operate on the various types of data and metadata integrated into the pipeline.
 
 ### Documentation for classes:
 #### [Subject](markdowns/subject.md)

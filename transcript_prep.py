@@ -83,7 +83,7 @@ def main():
         .sort_values(by=["onset", "part_idx"])
         .reset_index()
     )
-
+    
     subject_n.transcript.to_csv(
         subject_n.filenames["transcript"].parent
         / "_".join([subject_n.sid, "transcript.csv"])

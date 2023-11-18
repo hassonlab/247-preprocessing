@@ -20,6 +20,7 @@ class Transcript:
         """
         # Inherit __init__ from patient super class.
         # Subject.__init__(self, sid)
+        self.sid = sid
         self.file = file
 
     def parse_xml(self):

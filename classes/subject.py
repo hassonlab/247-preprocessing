@@ -1,13 +1,3 @@
-"""Class: subject and Subclasse: ecog, audio, and transcript definitions.
-
-...
-
-Typical usage example:
-
-  subject_n = subject()
-  subject_n.create_dir()
-"""
-
 import json
 import logging
 import getpass
@@ -24,7 +14,7 @@ from pathlib import Path
 # import globus_sdk
 # from globus_sdk.scopes import TransferScopes
 
-# TODO: I need more consistency in using path + file name vs. just file name in classes
+# TODO: need more consistency in using path + file name vs. just file name in classes
 
 
 class Subject:
@@ -33,19 +23,19 @@ class Subject:
     Aggregates information about data collected for a given patient.
 
     Attributes:
-        sid: The unique subject indentifier, DType: string.
-        base_path: Subject base directory, DType: Posix path.
-        audio_512_path: Subject downsampled audio directory, DType: Posix path.
-        audio_deid_path: Subject de-identified audio directory, DType: Posix path.
-        ecog_raw_path: Subject raw EDF directory, DType: Posix path.
-        ecog_processed_path: Subject processed EDF directory, DType: Posix path.
+        sid (str): The unique subject indentifier.
+        base_path (PosixPath): Subject base directory.
+        audio_512_path (PosixPath): Subject downsampled audio directory.
+        audio_deid_path (PosixPath): Subject de-identified audio directory.
+        ecog_raw_path (PosixPath): Subject raw EDF directory.
+        ecog_processed_path (PosixPath): Subject processed EDF directory.
     """
 
     def __init__(self, sid: str, create_config=False):
         """Initializes the instance based on subject identifier.
 
         Args:
-          sid: Identifies subject, Dtype: string.
+          sid (str): Identifies subject.
         """
         self.sid = sid
         self.base_path = Path.cwd().parents[1] / "subjects" / self.sid
@@ -149,7 +139,7 @@ class Subject:
         to Princeton endpoint.
 
         Args:
-          filetypes: Which files to transfer, Dtype: list.
+          filetypes (list): Which files to transfer.
         """
         # We use Globus Transfer API to transfer large EDF files
         # Using Globus-CLI works, but there's probably a better way to do this
@@ -205,19 +195,23 @@ class Subject:
             wait_cmd = " ".join(["globus", "task", "wait", tsk])
             subprocess.run(wait_cmd, shell=True)
 
-    def rename_files(self, newpath, file: Path, part: str, type: str, rename=False):
+    def rename_files(self, newpath: Path, file: Path, part: str, type: str, rename=False):
         """Rename and/or move files.
 
         ...
 
         Attributes:
-            part: file identifier, DType: str.
-            file: file path, DType: PosixPath.
-            type: label indicating file type: DType: str.
-            ext: file extension: DType: str.
+            newpath (PosixPath): new path
+            part (str): file identifier.
+            file (PosixPath): file path.
+            part (str): file part
+            type (str): label indicating file type.
+            ext (str): file extension.
+            rename (Bool): Whether to just get file name in correct format, or rename file in directory
         """
         # Ecog and downsampled audio files are not transferred with correct names
         # TODO: What do we want to do with multiple audio tracks?
+        # TODO: Re-evaluate this function
 
         file_name = self.filenames[type].name.format(sid=self.sid, part=part)
         # rename files and move directory
