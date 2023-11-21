@@ -4,6 +4,7 @@ on: [push]
 jobs:
     update-docs:
         runs-on: ubuntu-latest
+        if: github.ref == 'refs/heads/dev'
         steps:
             - run: echo "updating subject.md"
-            - run: pydoc-markdown -m ./classes/subject -I $(pwd) > ./docs/subject.md
+            - run: pydoc-markdown -m ./tree/dev/classes/subject -I $(pwd) > ./tree/dev/docs/subject.md
