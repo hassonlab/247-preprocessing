@@ -7,8 +7,11 @@ jobs:
         steps:
             - name: Update
               uses: actions/checkout@v4
-            - run: echo "updating subject.md"
-            - run: pip install pydoc-markdown
-            - run: pydoc-markdown -m classes/subject -I $(pwd) > docs/subject.md
-            - run: git commit -m "updated docs"
-            - run: git push -b dev
+            - run: |
+                pip install pydoc-markdown
+                pydoc-markdown -m classes/subject -I $(pwd) > docs/subject.md
+                git config --global user.name "your username"
+                git config --global user.email "your email"
+                git add -A
+                git commit -m "updated docs"
+                git push -b dev
