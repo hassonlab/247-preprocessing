@@ -1,0 +1,11 @@
+name: testing
+run-name: ${{ github.actor }} test
+on: workflow_dispatch
+jobs:
+    update-docs:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Update
+              uses: actions/checkout@v4
+            - run: echo "updating subject.md"
+            - run: pydoc-markdown -m classes/subject.py -I $(pwd) > docs/subject.md
