@@ -1,0 +1,15 @@
+name: 'My Workflow'
+on:
+  workflow_dispatch:
+    inputs:
+      parameter:
+        description: My Parameter
+  pull_request:
+jobs:
+    update-docs:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Update
+              uses: actions/checkout@v4
+            - run: echo "updating subject.md"
+            - run: pydoc-markdown -m classes/subject.py -I $(pwd) > docs/subject.md

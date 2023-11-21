@@ -1,7 +1,7 @@
 """Generate patient transcript.
 
 This is the fourth module to run in the 24/7 preprocessing pipeline. It must be run
-after patient_prep.py and audio_prep.py, and is strongly recommended to be run after 
+after subject_prep.py and audio_prep.py, and is strongly recommended to be run after 
 ecog_prep.py. Aggregates part transcripts into patient transcript, converts timings to 
 datetimes, aggregates de-id labels.
 

@@ -1,17 +1,8 @@
-<a id="subject"></a>
+<a id="classes/subject"></a>
 
-# subject
+# classes/subject
 
-Class: subject and Subclasse: ecog, audio, and transcript definitions.
-
-...
-
-Typical usage example:
-
-  subject_n = subject()
-  subject_n.create_dir()
-
-<a id="subject.Subject"></a>
+<a id="classes/subject.Subject"></a>
 
 ## Subject Objects
 
@@ -25,14 +16,14 @@ Aggregates information about data collected for a given patient.
 
 **Attributes**:
 
-- `sid` - The unique subject indentifier, DType: string.
-- `base_path` - Subject base directory, DType: Posix path.
-- `audio_512_path` - Subject downsampled audio directory, DType: Posix path.
-- `audio_deid_path` - Subject de-identified audio directory, DType: Posix path.
-- `ecog_raw_path` - Subject raw EDF directory, DType: Posix path.
-- `ecog_processed_path` - Subject processed EDF directory, DType: Posix path.
+- `sid` _str_ - The unique subject indentifier.
+- `base_path` _PosixPath_ - Subject base directory.
+- `audio_512_path` _PosixPath_ - Subject downsampled audio directory.
+- `audio_deid_path` _PosixPath_ - Subject de-identified audio directory.
+- `ecog_raw_path` _PosixPath_ - Subject raw EDF directory.
+- `ecog_processed_path` _PosixPath_ - Subject processed EDF directory.
 
-<a id="subject.Subject.__init__"></a>
+<a id="classes/subject.Subject.__init__"></a>
 
 #### \_\_init\_\_
 
@@ -44,9 +35,9 @@ Initializes the instance based on subject identifier.
 
 **Arguments**:
 
-- `sid` - Identifies subject, Dtype: string.
+- `sid` _str_ - Identifies subject.
 
-<a id="subject.Subject.update_log"></a>
+<a id="classes/subject.Subject.update_log"></a>
 
 #### update\_log
 
@@ -60,7 +51,7 @@ Update logger for each step in the pipeline.
 
 - `message` - message written to log file, DType: string.
 
-<a id="subject.Subject.audio_list"></a>
+<a id="classes/subject.Subject.audio_list"></a>
 
 #### audio\_list
 
@@ -70,7 +61,7 @@ def audio_list()
 
 Retruns list of audio files present in subject directory.
 
-<a id="subject.Subject.edf_list"></a>
+<a id="classes/subject.Subject.edf_list"></a>
 
 #### edf\_list
 
@@ -80,7 +71,7 @@ def edf_list()
 
 Retruns list of EDF files present in subject directory.
 
-<a id="subject.Subject.transcript_list"></a>
+<a id="classes/subject.Subject.transcript_list"></a>
 
 #### transcript\_list
 
@@ -90,7 +81,7 @@ def transcript_list()
 
 Retruns list of xml transcript files present in subject directory.
 
-<a id="subject.Subject.make_edf_wav_dict"></a>
+<a id="classes/subject.Subject.make_edf_wav_dict"></a>
 
 #### make\_edf\_wav\_dict
 
@@ -100,7 +91,7 @@ def make_edf_wav_dict()
 
 Start a dictionary for alignment between EDF and WAV files.
 
-<a id="subject.Subject.create_subject_transcript"></a>
+<a id="classes/subject.Subject.create_subject_transcript"></a>
 
 #### create\_subject\_transcript
 
@@ -110,7 +101,7 @@ def create_subject_transcript()
 
 Create an empty, subject-level transcript that will be filled with each part-level transcript.
 
-<a id="subject.Subject.create_summary"></a>
+<a id="classes/subject.Subject.create_summary"></a>
 
 #### create\_summary
 
@@ -120,7 +111,7 @@ def create_summary()
 
 Create summary file for new patient, written to throughout pipeline.
 
-<a id="subject.Subject.create_dir"></a>
+<a id="classes/subject.Subject.create_dir"></a>
 
 #### create\_dir
 
@@ -130,7 +121,7 @@ def create_dir()
 
 Create directory and standard sub-directories for a new subject.
 
-<a id="subject.Subject.transfer_files"></a>
+<a id="classes/subject.Subject.transfer_files"></a>
 
 #### transfer\_files
 
@@ -145,14 +136,18 @@ to Princeton endpoint.
 
 **Arguments**:
 
-- `filetypes` - Which files to transfer, Dtype: list.
+- `filetypes` _list_ - Which files to transfer.
 
-<a id="subject.Subject.rename_files"></a>
+<a id="classes/subject.Subject.rename_files"></a>
 
 #### rename\_files
 
 ```python
-def rename_files(newpath, file: Path, part: str, type: str, rename=False)
+def rename_files(newpath: Path,
+                 file: Path,
+                 part: str,
+                 type: str,
+                 rename=False)
 ```
 
 Rename and/or move files.
@@ -161,8 +156,11 @@ Rename and/or move files.
 
 **Attributes**:
 
-- `part` - file identifier, DType: str.
-- `file` - file path, DType: PosixPath.
-- `type` - label indicating file type: DType: str.
-- `ext` - file extension: DType: str.
+- `newpath` _PosixPath_ - new path
+- `part` _str_ - file identifier.
+- `file` _PosixPath_ - file path.
+- `part` _str_ - file part
+- `type` _str_ - label indicating file type.
+- `ext` _str_ - file extension.
+- `rename` _Bool_ - Whether to just get file name in correct format, or rename file in directory
 
