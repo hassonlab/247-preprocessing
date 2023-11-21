@@ -1,6 +1,10 @@
-name: testing
-run-name: ${{ github.actor }} test
-on: workflow_dispatch
+name: 'My Workflow'
+on:
+  workflow_dispatch:
+    inputs:
+      parameter:
+        description: My Parameter
+  pull_request:
 jobs:
     update-docs:
         runs-on: ubuntu-latest

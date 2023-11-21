@@ -1,10 +1,9 @@
 name: push-actions
 run-name: ${{ github.actor }} new git push
-on: workflow_dispatch
+on: [push]
 jobs:
     update-docs:
         runs-on: ubuntu-latest
-        if: github.ref == 'refs/heads/dev'
         steps:
             - name: Update
               uses: actions/checkout@v4
