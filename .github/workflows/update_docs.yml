@@ -9,4 +9,4 @@ jobs:
               uses: actions/checkout@v4
             - run: echo "updating subject.md"
             - run: pip install pydoc-markdown
-            - run: pydoc-markdown -m classes/subject.py -I $(pwd) > docs/subject.md
+            - run: pydoc-markdown -m classes/subject -I $(pwd) > docs/subject.md
