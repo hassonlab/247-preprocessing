@@ -6,5 +6,7 @@ jobs:
         runs-on: ubuntu-latest
         if: github.ref == 'refs/heads/dev'
         steps:
+            - name: Update
+              uses: actions/checkout@v4
             - run: echo "updating subject.md"
-            - run: pydoc-markdown -m ./tree/dev/classes/subject -I $(pwd) > ./tree/dev/docs/subject.md
+            - run: pydoc-markdown -m classes/subject.py -I $(pwd) > docs/subject.md
