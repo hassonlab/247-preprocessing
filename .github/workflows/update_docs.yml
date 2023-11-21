@@ -1,6 +1,6 @@
 name: push-actions
 run-name: ${{ github.actor }} new git push
-on: workflow_dispatch
+on: [push]
 jobs:
     update-docs:
         runs-on: ubuntu-latest
@@ -10,3 +10,5 @@ jobs:
             - run: echo "updating subject.md"
             - run: pip install pydoc-markdown
             - run: pydoc-markdown -m classes/subject -I $(pwd) > docs/subject.md
+            - run: git commit -m "updated docs"
+            - run: git push -b dev
