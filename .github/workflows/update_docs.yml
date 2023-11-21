@@ -1,0 +1,9 @@
+name: push-actions
+run-name: ${{ github.actor }} new git push
+on: [push]
+jobs:
+    update-docs:
+        runs-on: ubuntu-latest
+        steps:
+            - run: echo "updating subject.md"
+            - run: pydoc-markdown -m classes/subject -I $(pwd) > docs/subject.md
