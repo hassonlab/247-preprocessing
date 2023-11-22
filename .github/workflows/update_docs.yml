@@ -5,9 +5,16 @@ jobs:
     install:
         runs-on: ubuntu-latest
         steps:
-            - name: Install
+            - name: Update
+            # Checkout repo
               uses: actions/checkout@v4
+            # Export docstrings from classes to markdown files
             - run: |
                 pip install pydoc-markdown
-                pydoc-markdown -m classes/subject -I $(pwd) > docs/subject.md
+                for filename in classes/*.py; do
+                    tmp=${filename#*/}
+                    file=${tmp%.*}
+                    pydoc-markdown -m "$filename" -I $(pwd) > docs/"$file".md
+                done
+            # Commit, if changes were made
             - uses: stefanzweifel/git-auto-commit-action@v5
