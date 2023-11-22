@@ -7,23 +7,7 @@ jobs:
         steps:
             - name: Install
               uses: actions/checkout@v4
-            - run: pip install pydoc-markdown
-    update-docs:
-        needs: install
-        runs-on: ubuntu-latest
-        steps:
-          - name: Update
-            uses: actions/checkout@v4
-          - run: pydoc-markdown -m classes/subject -I $(pwd) > docs/subject.md
-    push:
-        needs: [install, update-docs]
-        runs-on: ubuntu-latest
-        steps:
-          - name: Push
-            uses: actions/checkout@v4
-          - run: |
-              git config --global user.name "baubrey"
-              git config --global user.email "baubrey1214@gmail.com"
-              git add -A
-              git commit -m "updated docs"
-              git push -b dev
+            - run: |
+                pip install pydoc-markdown
+                pydoc-markdown -m classes/subject -I $(pwd) > docs/subject.md
+            - uses: stefanzweifel/git-auto-commit-action@v5
