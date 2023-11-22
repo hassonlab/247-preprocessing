@@ -1,8 +1,8 @@
-<a id="config"></a>
+<a id="classes/config"></a>
 
-# config
+# classes/config
 
-<a id="config.Config"></a>
+<a id="classes/config.Config"></a>
 
 ## Config Objects
 
@@ -10,7 +10,7 @@
 class Config()
 ```
 
-<a id="config.Config.__init__"></a>
+<a id="classes/config.Config.__init__"></a>
 
 #### \_\_init\_\_
 
@@ -25,7 +25,7 @@ Initializes the instance based on subject identifier.
 - `sid` _str_ - Identifies subject.
 - `nyu_id` _str, optional_ - Subject identifier on NYU server.
 
-<a id="config.Config.configure_paths"></a>
+<a id="classes/config.Config.configure_paths"></a>
 
 #### configure\_paths
 
@@ -35,7 +35,7 @@ def configure_paths()
 
 Configurable filepaths.
 
-<a id="config.Config.configure_paths_nyu"></a>
+<a id="classes/config.Config.configure_paths_nyu"></a>
 
 #### configure\_paths\_nyu
 
@@ -45,7 +45,7 @@ def configure_paths_nyu()
 
 Configurable filepaths on NYU server.
 
-<a id="config.Config.write_config"></a>
+<a id="classes/config.Config.write_config"></a>
 
 #### write\_config
 
@@ -55,7 +55,7 @@ def write_config()
 
 Write YAML file containing configured information for each subject.
 
-<a id="config.Config.read_config"></a>
+<a id="classes/config.Config.read_config"></a>
 
 #### read\_config
 

@@ -1,8 +1,8 @@
-<a id="ecog"></a>
+<a id="classes/ecog"></a>
 
-# ecog
+# classes/ecog
 
-<a id="ecog.Ecog"></a>
+<a id="classes/ecog.Ecog"></a>
 
 ## Ecog Objects
 
@@ -32,7 +32,7 @@ Information and data for each patient ECoG file.
 - `edf_enddatetime` _datetime_ - End date time of EDF file.
 - `data` _NumPy array_ - EDF channel data.
 
-<a id="ecog.Ecog.__init__"></a>
+<a id="classes/ecog.Ecog.__init__"></a>
 
 #### \_\_init\_\_
 
@@ -47,7 +47,7 @@ Initializes the instance based on subject identifier and file identifier.
 - `sid` _str_ - Identifies subject.
 - `file` _str_ - Filename.
 
-<a id="ecog.Ecog.read_EDFHeader"></a>
+<a id="classes/ecog.Ecog.read_EDFHeader"></a>
 
 #### read\_EDFHeader
 
@@ -57,7 +57,7 @@ def read_EDFHeader()
 
 Read EDF header.
 
-<a id="ecog.Ecog.end_datetime"></a>
+<a id="classes/ecog.Ecog.end_datetime"></a>
 
 #### end\_datetime
 
@@ -67,7 +67,7 @@ def end_datetime()
 
 Calculate EDF end datetime from start datetime and file duration.
 
-<a id="ecog.Ecog.read_channels"></a>
+<a id="classes/ecog.Ecog.read_channels"></a>
 
 #### read\_channels
 
@@ -83,7 +83,7 @@ Read EDF channels for a certain time frame.
 - `offset_sec` _int_ - End of time frame to read.
 - `**chan` - Keyword arguments 'start' and/or 'end'.
 
-<a id="ecog.Ecog.process_ecog"></a>
+<a id="classes/ecog.Ecog.process_ecog"></a>
 
 #### process\_ecog
 
@@ -93,7 +93,7 @@ def process_ecog()
 
 Process signal data.
 
-<a id="ecog.Ecog.write_edf"></a>
+<a id="classes/ecog.Ecog.write_edf"></a>
 
 #### write\_edf
 
