@@ -45,12 +45,8 @@ Both [24/7 Main Project](#main-project) and [24/7 Side Projects](#side-projects)
 
 ### Documentation for classes:
 #### [Subject](markdowns/subject.md)
-This class defines a subject.\
-Properties of this class are those that relate to 24/7 data on a whole subject level.
 #### [ECoG](markdowns/ecog.md)
-Properties of this class are those that relate to ECoG data on an individual file level.
 #### [Audio](markdowns/audio.md) 
-Properties of this class are those that relate to audio data on an individual file level.
 #### [Transcript](markdowns/transcript.md) 
 #### [Silence](markdowns/silence.md) 
 #### [Config](markdowns/config.md) 
