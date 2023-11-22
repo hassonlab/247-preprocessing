@@ -44,9 +44,9 @@ For projects that use data collected under the 24/7 project, but require differe
 Both [24/7 Main Project](#main-project) and [24/7 Side Projects](#side-projects) utilize 6 custom classes that help to define and operate on the various types of data and metadata integrated into the pipeline.
 
 ### Documentation for classes:
-#### [Subject](markdowns/subject.md)
-#### [ECoG](markdowns/ecog.md)
-#### [Audio](markdowns/audio.md) 
-#### [Transcript](markdowns/transcript.md) 
-#### [Silence](markdowns/silence.md) 
-#### [Config](markdowns/config.md) 
+#### [Subject](docs/subject.md)
+#### [ECoG](docs/ecog.md)
+#### [Audio](docs/audio.md) 
+#### [Transcript](docs/transcript.md) 
+#### [Silence](docs/silence.md) 
+#### [Config](docs/config.md) 
