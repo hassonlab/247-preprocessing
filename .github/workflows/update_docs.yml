@@ -1,12 +1,22 @@
 name: push-actions
 run-name: ${{ github.actor }} new git push
-on: workflow_dispatch
+on: [push]
 jobs:
-    update-docs:
+    install:
         runs-on: ubuntu-latest
         steps:
             - name: Update
+            # Checkout repo
               uses: actions/checkout@v4
-            - run: echo "updating subject.md"
-            - run: pip install pydoc-markdown
-            - run: pydoc-markdown -m classes/subject -I $(pwd) > docs/subject.md
+            # Export docstrings from classes to markdown files
+            - run: |
+                pip install pydoc-markdown
+                for filename in classes/*.py; do
+                    tmp=${filename%.*}
+                    file=${tmp#*/}
+                    if [ "$file" != "__init__" ]; then
+                        pydoc-markdown -m "$tmp" -I $(pwd) > docs/"$file".md
+                    fi;
+                done
+            # Commit, if changes were made
+            - uses: stefanzweifel/git-auto-commit-action@v5

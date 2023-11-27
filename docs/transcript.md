@@ -1,8 +1,8 @@
-<a id="transcript"></a>
+<a id="classes/transcript"></a>
 
-# transcript
+# classes/transcript
 
-<a id="transcript.Transcript"></a>
+<a id="classes/transcript.Transcript"></a>
 
 ## Transcript Objects
 
@@ -18,7 +18,7 @@ Transcript corresponding to a specific audio file.
 
 - `file` _PosixPath_ - Path to the transcript.
 
-<a id="transcript.Transcript.__init__"></a>
+<a id="classes/transcript.Transcript.__init__"></a>
 
 #### \_\_init\_\_
 
@@ -32,7 +32,7 @@ Initializes the instance based on file identifier.
 
 - `file` _PosixPath_ - Path to the transcript.
 
-<a id="transcript.Transcript.parse_xml"></a>
+<a id="classes/transcript.Transcript.parse_xml"></a>
 
 #### parse\_xml
 
@@ -42,7 +42,7 @@ def parse_xml()
 
 Convert Verbit.AI format to our format.
 
-<a id="transcript.Transcript.agg_silences"></a>
+<a id="classes/transcript.Transcript.agg_silences"></a>
 
 #### agg\_silences
 
@@ -56,7 +56,7 @@ Add silence information to transcript.
 
 - `silence_file` _DataFrame_ - Silence types, onsets, offsets.
 
-<a id="transcript.Transcript.add_dt"></a>
+<a id="classes/transcript.Transcript.add_dt"></a>
 
 #### add\_dt
 
@@ -71,7 +71,7 @@ Add audio date-time inofrmation.
   onset_day (str)
   onset_time (str)
 
-<a id="transcript.Transcript.convert_timedelta"></a>
+<a id="classes/transcript.Transcript.convert_timedelta"></a>
 
 #### convert\_timedelta
 
@@ -81,7 +81,7 @@ def convert_timedelta()
 
 Convert to timedelta.
 
-<a id="transcript.Transcript.compress_transcript"></a>
+<a id="classes/transcript.Transcript.compress_transcript"></a>
 
 #### compress\_transcript
 

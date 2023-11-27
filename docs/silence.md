@@ -1,8 +1,8 @@
-<a id="silence"></a>
+<a id="classes/silence"></a>
 
-# silence
+# classes/silence
 
-<a id="silence.Silence"></a>
+<a id="classes/silence.Silence"></a>
 
 ## Silence Objects
 
@@ -18,7 +18,7 @@ File containing marked silences corresponding to a specific audio file.
 
 - `file` _PosixPath_ - Path to the silence file.
 
-<a id="silence.Silence.__init__"></a>
+<a id="classes/silence.Silence.__init__"></a>
 
 #### \_\_init\_\_
 
@@ -32,7 +32,7 @@ Initializes the instance based on file identifier.
 
 - `file` _PosixPath_ - Path to file.
 
-<a id="silence.Silence.read_silence"></a>
+<a id="classes/silence.Silence.read_silence"></a>
 
 #### read\_silence
 
@@ -42,7 +42,7 @@ def read_silence()
 
 Read silence file to Pandas DataFrame
 
-<a id="silence.Silence.calc_silence"></a>
+<a id="classes/silence.Silence.calc_silence"></a>
 
 #### calc\_silence
 

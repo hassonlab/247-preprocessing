@@ -10,7 +10,7 @@
 class Subject()
 ```
 
-Information about a patient.
+Setup for a new patient.
 
 Aggregates information about data collected for a given patient.
 
