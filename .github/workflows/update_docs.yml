@@ -3,11 +3,11 @@ run-name: ${{ github.actor }} new git push
 on: [push]
 jobs:
     install:
+        name: update docs
         runs-on: ubuntu-latest
         steps:
-            - name: Update
             # Checkout repo
-              uses: actions/checkout@v4
+            - uses: actions/checkout@v4
             # Export docstrings from classes to markdown files
             - run: |
                 pip install pydoc-markdown
@@ -20,3 +20,11 @@ jobs:
                 done
             # Commit, if changes were made
             - uses: stefanzweifel/git-auto-commit-action@v5
+    linter_name:
+        name: runner / black formatter
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: rickstaa/action-black@v1
+            with:
+                black_args: ". --check"
