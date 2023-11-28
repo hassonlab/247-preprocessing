@@ -1,8 +1,8 @@
-<a id="audio"></a>
+<a id="classes/audio"></a>
 
-# audio
+# classes/audio
 
-<a id="audio.Audio"></a>
+<a id="classes/audio.Audio"></a>
 
 ## Audio Objects
 
@@ -24,7 +24,7 @@ Information and data for each patient audio file.
 - `deid_audio` - Data from de-identified audio file (input audio), DType: Pydub AudioSegment.
 - `transcribe_audio` - Audio data for transcription (output audio), DType: Pydub AudioSegment.
 
-<a id="audio.Audio.__init__"></a>
+<a id="classes/audio.Audio.__init__"></a>
 
 #### \_\_init\_\_
 
@@ -38,7 +38,7 @@ Initializes the instance based on file identifier.
 
 - `fid` - File identifier.
 
-<a id="audio.Audio.read_audio"></a>
+<a id="classes/audio.Audio.read_audio"></a>
 
 #### read\_audio
 
@@ -52,7 +52,7 @@ Read audio signal.
 
 - `filepath` - Path to audio file.
 
-<a id="audio.Audio.crop_audio"></a>
+<a id="classes/audio.Audio.crop_audio"></a>
 
 #### crop\_audio
 
@@ -62,7 +62,7 @@ def crop_audio(silence_file)
 
 Remove marked segments from audio. For uploading for transcription.
 
-<a id="audio.Audio.slow_audio"></a>
+<a id="classes/audio.Audio.slow_audio"></a>
 
 #### slow\_audio
 
@@ -72,7 +72,7 @@ def slow_audio()
 
 Slow down audio for transcription.
 
-<a id="audio.Audio.write_audio"></a>
+<a id="classes/audio.Audio.write_audio"></a>
 
 #### write\_audio
 
