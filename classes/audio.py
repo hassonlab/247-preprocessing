@@ -1,8 +1,12 @@
 import taglib
+import getpass
 import numpy as np
 from pydub import AudioSegment
+from autologging import traced, logged
 
 
+@traced
+@logged
 class Audio:
     """Information and data for each patient audio file.
 
@@ -18,15 +22,16 @@ class Audio:
         transcribe_audio: Audio data for transcription (output audio), DType: Pydub AudioSegment.
     """
 
-    def __init__(self, file):
+    def __init__(self, sid: str, file):
         """Initializes the instance based on file identifier.
 
         Args:
           fid: File identifier.
         """
-        # Inherit __init__ from patient super class.
-        # Subject.__init__(self, sid)
-        self.name = file
+        self.sid = sid
+        self.in_name = file
+
+        self.__log.info("User: " + getpass.getuser())
 
     def read_audio(self):
         """Read audio signal.
@@ -35,19 +40,21 @@ class Audio:
           filepath: Path to audio file.
         """
         # TODO: option for reading multiple tracks?
-        self.audio_track = AudioSegment.from_wav(self.in_path / self.name)
+        self.audio_track = AudioSegment.from_wav(self.in_name)
         # play(audioPart)
         # NOTE: pydub does things in milliseconds
 
-    def crop_audio(self, silence_file):
+    def crop_audio(self,silence_times):
         """Remove marked segments from audio. For uploading for transcription."""
         # TODO: The deid audio files might be split parts
         # TODO: Do more checks
 
         # Get speech times from silence times
-        speech_onsets = np.array(silence_file.silence_offsets.view(np.int64) / int(1e6))
+        # extract sid and part
+        # format
+        speech_onsets = np.array(silence_times.silence_offsets.view(np.int64) / int(1e6))
         speech_offsets = np.roll(
-            silence_file.silence_onsets.view(np.int64) / int(1e6), -1
+            silence_times.silence_onsets.view(np.int64) / int(1e6), -1
         )
 
         # Remove consecutive non-speech labels
@@ -74,7 +81,7 @@ class Audio:
 
     def write_audio(self):
         """Write audio signal."""
-        self.transcribe_audio.export(self.file, format="wav")
-        with taglib.File(self.file, save_on_exit=True) as audio_file:
+        self.transcribe_audio.export(self.out_name, format="wav")
+        with taglib.File(self.out_name, save_on_exit=True) as audio_file:
             audio_file.tags["startDateTime"] = "startDateTime"
             audio_file.tags["endDateTime"] = "endDateTime"
