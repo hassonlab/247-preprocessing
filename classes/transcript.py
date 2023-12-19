@@ -1,8 +1,11 @@
 import re
 import pandas as pd
 import xml.etree.ElementTree as ET
+from autologging import traced, logged
 
 
+@traced
+@logged
 class Transcript:
     """Transcript corresponding to a specific audio file.
 
@@ -18,8 +21,6 @@ class Transcript:
         Args:
           file (PosixPath): Path to the transcript.
         """
-        # Inherit __init__ from patient super class.
-        # Subject.__init__(self, sid)
         self.sid = sid
         self.file = file
 
@@ -112,6 +113,25 @@ class Transcript:
         # TODO: Decide what to do with the 'Multiple Speaker' tag
         # TODO: Checks for additional punctuation: '--'
 
+    def get_audio_info_csv(self) -> tuple([str, str]):
+        """Get audio onset date, time, duration from a CSV file.
+
+        Note: this function should only be used if this information is not in the header of the audio file.
+        """
+        audiotimestamps = pd.read_csv(self.file.parents[2] / "audio" / (self.sid + "_timestamps.csv"))
+
+        # NOTE: 798 has 2 mics, 2 audio files listed. This needs to be changed in the audio timestamps code.
+        audiotimestamps = audiotimestamps[0::2]
+        audiotimestamps = audiotimestamps.sort_values(by=["start date", " start time"])
+        audiotimestamps = audiotimestamps.reset_index(drop=True)
+        # TODO: If we're using this, we need to keep association between nyu file name and our file name
+        part_num = self.file.name.split("_")[1][-3:]
+        onset_day = audiotimestamps["start date"][int(part_num)]
+        onset_time = audiotimestamps[" start time"][int(part_num)]
+
+        return onset_day, onset_time
+
+
     def agg_silences(self, silence_file):
         """Add silence information to transcript.
 
@@ -148,7 +168,7 @@ class Transcript:
             .reset_index(drop=True)
         )
 
-    def add_dt(self, onset_day, onset_time):
+    def add_dt(self, onset_day: str, onset_time: str):
         """Add audio date-time inofrmation.
 
         Args:

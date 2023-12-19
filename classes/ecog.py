@@ -1,10 +1,15 @@
 import pyedflib
 import warnings
+import getpass
 import numpy as np
 import datetime as dt
-from multiprocessing import Pool
+import multiprocessing
+from concurrent.futures import ThreadPoolExecutor
+from autologging import traced, logged
 
 
+@traced
+@logged
 class Ecog:
     """Information and data for each patient ECoG file.
 
@@ -36,11 +41,11 @@ class Ecog:
           file (str): Filename.
         """
 
-        # Inherit __init__ from patient super class (file directories).
-        # Subject.__init__(self, sid)
         self.sid = sid
         self.name = file
         self.non_electrode_id = ["SG", "EKG", "DC"]
+
+        self.__log.info("User: " + getpass.getuser())
 
     expected_sr = 512
 
@@ -49,7 +54,7 @@ class Ecog:
     def read_EDFHeader(self):
         """Read EDF header."""
         self.ecog_hdr = pyedflib.highlevel.read_edf_header(
-            str(self.in_path / self.name), read_annotations=True
+            str(self.name), read_annotations=True
         )
         self.samp_rate = int(self.ecog_hdr["SignalHeaders"][0]["sample_rate"])
 
@@ -68,6 +73,9 @@ class Ecog:
             **chan: Keyword arguments 'start' and/or 'end'.
         """
 
+        def read_elec_signal(chn_idx):
+            return ecog_data.readSignal(chn_idx, onset_sec, offset_sec)
+
         # If channels not specified on function call, read all channels
         if not chan["start"]:
             chan["start"] = 0
@@ -79,14 +87,20 @@ class Ecog:
         num_samps = offset_sec * self.samp_rate - onset_sec * self.samp_rate
         data = np.empty([chan["end"] - chan["start"], num_samps])
 
-        ecog_data = pyedflib.EdfReader(str(self.in_path / self.name))
-        for idx, chan in enumerate(chan_nums):
-            # TODO: parallelize
-            data[idx] = ecog_data.readSignal(
-                chan,
-                onset_sec,
-                (offset_sec * self.samp_rate - onset_sec * self.samp_rate),
-            )
+        ecog_data = pyedflib.EdfReader(str(self.name))
+        # for idx, chan in enumerate(chan_nums):
+        #    # TODO: parallelize
+        # data = ecog_data.readSignal(
+        #        chan,
+        #        onset_sec,
+        #        (offset_sec * self.samp_rate - onset_sec * self.samp_rate),
+        #    )
+        # self.data = data
+        # ecog_data.close()
+
+        with ThreadPoolExecutor() as pool:
+            data = np.stack(list(pool.map(read_elec_signal, chan_nums))).squeeze()
+
         self.data = data
         ecog_data.close()
 
@@ -99,7 +113,9 @@ class Ecog:
 
         signal_hdrs = self.ecog_hdr["SignalHeaders"]
         del self.ecog_hdr["SignalHeaders"]
-        # phys min and max are swapped for some reason
+
+        # TODO: move this
+        # phys min and max are swapped for some reason (798)
         for idx, hdr in enumerate(signal_hdrs):
             if hdr["physical_min"] > hdr["physical_max"]:
                 signal_hdrs[idx]["physical_min"] = -(hdr["physical_min"])

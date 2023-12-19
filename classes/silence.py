@@ -1,6 +1,9 @@
 import pandas as pd
+from autologging import traced, logged
 
 
+@traced
+@logged
 class Silence:
     """File containing marked silences corresponding to a specific audio file.
 
@@ -10,13 +13,15 @@ class Silence:
         file (PosixPath): Path to the silence file.
     """
 
+    type = 'silences'
+    ext = '.csv'
+
     def __init__(self, file):
         """Initializes the instance based on file identifier.
 
         Args:
           file (PosixPath): Path to file.
         """
-        # Inherit __init__ from patient super class.
         self.file = file
 
     def read_silence(self):

@@ -4,6 +4,7 @@ import getpass
 import subprocess
 import pandas as pd
 from pathlib import Path
+from autologging import traced, logged
 
 # import tracemalloc
 # import timeit
@@ -16,7 +17,8 @@ from pathlib import Path
 
 # TODO: need more consistency in using path + file name vs. just file name in classes
 
-
+@traced
+@logged
 class Subject:
     """Setup for a new patient.
 
@@ -97,6 +99,13 @@ class Subject:
         ]
         self.xml_files = xml_files
 
+    def silence_list(self):
+        """Retruns list of csv files of de-identification notes present in subject directory."""
+        silence_files = [
+            f for f in self.filenames["silence"].parent.rglob("[!.]*") if f.is_file()
+        ]
+        self.silence_files = silence_files
+
     def make_edf_wav_dict(self):
         """Start a dictionary for alignment between EDF and WAV files."""
         self.alignment = {
@@ -132,7 +141,7 @@ class Subject:
             elif not self.filenames[path].suffix:
                 self.filenames[path].mkdir(parents=True)
 
-    def transfer_files(self, filetypes: list = ["ecog", "audio-512Hz", "audio-deid"]):
+    def transfer_files(self, filetypes: list = ["ecog", "audio-512Hz", "audio-deid", "silence"]):
         """Transfer files to patient directory.
 
         Connect to Globus Transfer API and transfer files from NYU endpoint
@@ -144,7 +153,7 @@ class Subject:
         # We use Globus Transfer API to transfer large EDF files
         # Using Globus-CLI works, but there's probably a better way to do this
 
-        # TODO: not waiting for activation?
+        # TODO: code needs to wait for activations
         globus_cmd = " ".join(
             [
                 "globus",
@@ -157,7 +166,6 @@ class Subject:
             ]
         )
         subprocess.run(globus_cmd, shell=True)
-
         for filetype in filetypes:
             if filetype == "audio-512Hz":
                 source_path = self.nyu_downsampled_audio_path
@@ -165,9 +173,12 @@ class Subject:
             elif filetype == "audio-deid":
                 source_path = self.nyu_deid_audio_path
                 dest_path = self.filenames["audio_deid"].parent
+            elif filetype == "silence":
+                source_path = self.nyu_deid_silence_path
+                dest_path = self.filenames["silence"].parent
             elif filetype == "ecog":
                 source_path = self.nyu_ecog_path
-                dest_path = self.filenamess["ecog_raw"].parent
+                dest_path = self.filenames["ecog_raw"].parent
 
             source = self.source_endpoint_id + ":" + str(source_path)
             dest = self.dest_endpoint_id + ":" + str(dest_path)
@@ -195,7 +206,9 @@ class Subject:
             wait_cmd = " ".join(["globus", "task", "wait", tsk])
             subprocess.run(wait_cmd, shell=True)
 
-    def rename_files(self, newpath: Path, file: Path, part: str, type: str, rename=False):
+    def rename_files(
+        self, file: Path, part: str, type: str, rename=False
+    ):
         """Rename and/or move files.
 
         ...
@@ -212,10 +225,13 @@ class Subject:
         # Ecog and downsampled audio files are not transferred with correct names
         # TODO: What do we want to do with multiple audio tracks?
         # TODO: Re-evaluate this function
-
-        file_name = self.filenames[type].name.format(sid=self.sid, part=part)
+        file_name = Path(str(self.filenames[type]).format(sid=self.sid, part=part))
         # rename files and move directory
         if rename == True:
-            file.rename(newpath / file_name)
+            file.rename(file_name)
 
         return file_name
+    
+    def match_filenames(self):
+
+        return

@@ -2,21 +2,9 @@ import json
 import os.path
 from datetime import date
 import getpass
-import argparse
 import numpy as np
 from scipy import signal
 import matplotlib.pyplot as plt
-
-
-def arg_parse():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--nyu_id", type=str)
-    parser.add_argument("--sid", type=str)
-    parser.add_argument("--input_name", nargs="*", default=None)
-
-    args = parser.parse_args()
-
-    return args
 
 
 def edf_wav_shift(ecog_dict, audio):
