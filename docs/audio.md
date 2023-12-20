@@ -7,6 +7,9 @@
 ## Audio Objects
 
 ```python
+@traced
+
+@logged
 class Audio()
 ```
 
@@ -29,7 +32,7 @@ Information and data for each patient audio file.
 #### \_\_init\_\_
 
 ```python
-def __init__(file)
+def __init__(sid: str, file)
 ```
 
 Initializes the instance based on file identifier.
@@ -57,7 +60,7 @@ Read audio signal.
 #### crop\_audio
 
 ```python
-def crop_audio(silence_file)
+def crop_audio(silence_times)
 ```
 
 Remove marked segments from audio. For uploading for transcription.

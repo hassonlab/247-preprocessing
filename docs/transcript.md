@@ -7,6 +7,9 @@
 ## Transcript Objects
 
 ```python
+@traced
+
+@logged
 class Transcript()
 ```
 
@@ -42,6 +45,18 @@ def parse_xml()
 
 Convert Verbit.AI format to our format.
 
+<a id="classes/transcript.Transcript.get_audio_info_csv"></a>
+
+#### get\_audio\_info\_csv
+
+```python
+def get_audio_info_csv() -> tuple([str, str])
+```
+
+Get audio onset date, time, duration from a CSV file.
+
+Note: this function should only be used if this information is not in the header of the audio file.
+
 <a id="classes/transcript.Transcript.agg_silences"></a>
 
 #### agg\_silences
@@ -61,7 +76,7 @@ Add silence information to transcript.
 #### add\_dt
 
 ```python
-def add_dt(onset_day, onset_time)
+def add_dt(onset_day: str, onset_time: str)
 ```
 
 Add audio date-time inofrmation.

@@ -12,6 +12,7 @@ from classes.transcript import Transcript
 
 
 def subject_prep(subject_n):
+    """Set-up for processing new subject"""
 
     # Create parent directory for subject
     if not subject_n.base_path.exists():
@@ -60,6 +61,7 @@ def subject_prep(subject_n):
 
 
 def ecog_prep(ecog_file):
+    """Split and process ECoG signal"""
     ecog_file.read_EDFHeader()
     ecog_file.end_datetime()
     ecog_file.read_channels(10, 100000, start=0, end=10)
@@ -70,20 +72,20 @@ def ecog_prep(ecog_file):
         [ecog_file.sid, "_ecog-raw_", "0", ".edf"]
     )
     ecog_file.write_edf()
-    return
+
 
 def audio_prep(transcribe_audio: Audio, silence_times: Silence):
+    """Prepare audio file for transcription"""
     transcribe_audio.read_audio()
-
-    #temp = Template('${sid}_Part${part}_${type}.${ext}')
-    #print(temp.substitute(sid='sub-002', part='001', type='audio-deid', ext='wav'))
 
     transcribe_audio.crop_audio(silence_times)
     transcribe_audio.slow_audio()
     # audio.denoise_audio(transcribe_audio)
     transcribe_audio.write_audio()
+    
 
 def transcript_prep(transcript_file: Transcript, silence_times: Silence):
+    """Prepare subject-level transcript"""
     transcript_file.parse_xml()
     transcript_file.convert_timedelta()
     transcript_file.compress_transcript(0.05)
@@ -92,7 +94,6 @@ def transcript_prep(transcript_file: Transcript, silence_times: Silence):
     transcript_file.add_dt(onset_day, onset_time)
 
     transcript_file.agg_silences(silence_times)
-    return
 
 
 def main():
@@ -104,10 +105,6 @@ def main():
 
     # Create config
     config = Config(new_id, nyu_id)
-    #config.conf()
-    #config.write_config()
-    #config = ConfigObj(str(config.base_path / "test.ini"),interpolation='ConfigParser')
-    #config.read_config()
     config.configure_paths_old()
     config.configure_paths_nyu()
     logging.basicConfig(
@@ -117,7 +114,6 @@ def main():
     )
     # Generate instance of subject class
     subject_n = Subject(new_id, create_config=True)
-    #subject_n.config = config
     subject_n.filenames = config.filenames
     subject_n.__dict__.update(config.nyu_paths.items())
 
@@ -143,12 +139,10 @@ def main():
             transcribe_audio = Audio(subject_n.sid, file)
 
             [_,part,_] = transcribe_audio.in_name.stem.split('_')
-            #ext = transcribe_audio.name.suffix
             transcribe_audio.out_name = subject_n.rename_files(file, part, "audio_transcribe")
 
             silence_file = subject_n.rename_files(file, part, "silence")
             silence_times = Silence(silence_file)
-            #silence_times.file_template = config.filenames["silence"]
             silence_times.read_silence()
             silence_times.calc_silence()
 
@@ -170,7 +164,6 @@ def main():
                 transcript_prep(transcript_file,silence_times)
 
             subject_n.transcript = pd.concat([subject_n.transcript,transcript_file.transcript])
-            #subject_n.transcript = subject_n.transcript.append(transcript_file.transcript)
         else: print('Skipping step_005: transcript_prep')
 
     # Write subject-level transcript

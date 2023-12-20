@@ -26,5 +26,5 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - uses: rickstaa/action-black@v1
-            with:
+              with:
                 black_args: ". --check"
