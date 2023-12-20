@@ -8,32 +8,29 @@ There are 2 main ways to utilize this code.
 Prepare data collected under the 24/7 project for analysis.
 
 ### Getting Started
+1. Clone the repository:  
 `git clone https://github.com/hassonlab/247-preprocessing.git`
+2. Create your conda environment with required packages:  
+`conda env create -f environment.yml`
 ### Usage
 #### Step 00: Data collection
 ...
 #### Step 01: Transfer preparation
 ...
 #### Step 02: Subject preparation
-` python subject_prep.py --sid sub-001 `
+`python pipeline.py --sid sub-XXX --steps 2`
 #### Step 03: ECoG preparation
 Run for every subject EDF file:\
-` python ecog_prep.py --sid sub-001 `
+`python pipeline.py --sid sub-XXX --steps 3`
 
-Run for a specific file:\
-` python ecog_prep.py --sid sub-001 --fid NAME.EDF `
 #### Step 04: Audio preparation
 Run for every subject de-identified audio file:\
-` python audio_prep.py --sid sub-001 `
+`python pipeline.py --sid sub-XXX --steps 4`
 
-Run for a specific file:\
-` python audio_prep.py --sid sub-001 --fid 001 `
 #### Step 05: Transcript preparation
 Run for every subject transcript file:\
-` python transcript_prep.py --sid sub-001 `
+`python pipeline.py --sid sub-XXX --steps 5`
 
-Run for a specific file:\
-` python transcript_prep.py --sid sub-001 --fid 001 `
 #### Step 06: Subject summarization
 ...
 
