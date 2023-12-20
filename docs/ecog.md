@@ -7,6 +7,9 @@
 ## Ecog Objects
 
 ```python
+@traced
+
+@logged
 class Ecog()
 ```
 

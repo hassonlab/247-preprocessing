@@ -7,6 +7,9 @@
 ## Silence Objects
 
 ```python
+@traced
+
+@logged
 class Silence()
 ```
 
