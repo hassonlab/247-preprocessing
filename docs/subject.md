@@ -7,6 +7,9 @@
 ## Subject Objects
 
 ```python
+@traced
+
+@logged
 class Subject()
 ```
 
@@ -81,6 +84,16 @@ def transcript_list()
 
 Retruns list of xml transcript files present in subject directory.
 
+<a id="classes/subject.Subject.silence_list"></a>
+
+#### silence\_list
+
+```python
+def silence_list()
+```
+
+Retruns list of csv files of de-identification notes present in subject directory.
+
 <a id="classes/subject.Subject.make_edf_wav_dict"></a>
 
 #### make\_edf\_wav\_dict
@@ -126,7 +139,8 @@ Create directory and standard sub-directories for a new subject.
 #### transfer\_files
 
 ```python
-def transfer_files(filetypes: list = ["ecog", "audio-512Hz", "audio-deid"])
+def transfer_files(
+        filetypes: list = ["ecog", "audio-512Hz", "audio-deid", "silence"])
 ```
 
 Transfer files to patient directory.
@@ -143,11 +157,7 @@ to Princeton endpoint.
 #### rename\_files
 
 ```python
-def rename_files(newpath: Path,
-                 file: Path,
-                 part: str,
-                 type: str,
-                 rename=False)
+def rename_files(file: Path, part: str, type: str, rename=False)
 ```
 
 Rename and/or move files.

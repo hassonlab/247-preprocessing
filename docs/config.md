@@ -25,12 +25,12 @@ Initializes the instance based on subject identifier.
 - `sid` _str_ - Identifies subject.
 - `nyu_id` _str, optional_ - Subject identifier on NYU server.
 
-<a id="classes/config.Config.configure_paths"></a>
+<a id="classes/config.Config.configure_paths_old"></a>
 
-#### configure\_paths
+#### configure\_paths\_old
 
 ```python
-def configure_paths()
+def configure_paths_old()
 ```
 
 Configurable filepaths.
@@ -45,22 +45,22 @@ def configure_paths_nyu()
 
 Configurable filepaths on NYU server.
 
-<a id="classes/config.Config.write_config"></a>
+<a id="classes/config.Config.write_config_old"></a>
 
-#### write\_config
+#### write\_config\_old
 
 ```python
-def write_config()
+def write_config_old()
 ```
 
 Write YAML file containing configured information for each subject.
 
-<a id="classes/config.Config.read_config"></a>
+<a id="classes/config.Config.read_config_old"></a>
 
-#### read\_config
+#### read\_config\_old
 
 ```python
-def read_config()
+def read_config_old()
 ```
 
 Read YAML file containing configured information for each subject.
