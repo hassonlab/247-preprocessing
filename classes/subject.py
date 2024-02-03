@@ -5,20 +5,11 @@ import subprocess
 import pandas as pd
 from pathlib import Path
 from autologging import traced, logged
-
-# import tracemalloc
-# import timeit
-# from scipy.io import wavfile
-# from pydub.playback import play
-# from pydub.utils import mediainfo
-# from collections import deque
-# import globus_sdk
-# from globus_sdk.scopes import TransferScopes
+from word2number import w2n
 
 # TODO: need more consistency in using path + file name vs. just file name in classes
 
-@traced
-@logged
+
 class Subject:
     """Setup for a new patient.
 
@@ -88,9 +79,12 @@ class Subject:
     def edf_list(self):
         """Retruns list of EDF files present in subject directory."""
         # TODO: I don't know if this is consistant across subject (on nyu server)
-        self.edf_files = [
+        edf_files = [
             f for f in self.filenames["ecog_raw"].parent.rglob("[!.]*") if f.is_file()
         ]
+        self.edf_files = edf_files
+
+        return edf_files
 
     def transcript_list(self):
         """Retruns list of xml transcript files present in subject directory."""
@@ -141,7 +135,9 @@ class Subject:
             elif not self.filenames[path].suffix:
                 self.filenames[path].mkdir(parents=True)
 
-    def transfer_files(self, filetypes: list = ["ecog", "audio-512Hz", "audio-deid", "silence"]):
+    def transfer_files(
+        self, filetypes: list = ["ecog", "audio-512Hz", "audio-deid", "silence"]
+    ):
         """Transfer files to patient directory.
 
         Connect to Globus Transfer API and transfer files from NYU endpoint
@@ -158,6 +154,12 @@ class Subject:
             [
                 "globus",
                 "login;",
+            ]
+        )
+        subprocess.run(globus_cmd, shell=True)
+
+        globus_cmd = " ".join(
+            [
                 "globus",
                 "endpoint",
                 "activate",
@@ -166,6 +168,7 @@ class Subject:
             ]
         )
         subprocess.run(globus_cmd, shell=True)
+
         for filetype in filetypes:
             if filetype == "audio-512Hz":
                 source_path = self.nyu_downsampled_audio_path
@@ -206,9 +209,7 @@ class Subject:
             wait_cmd = " ".join(["globus", "task", "wait", tsk])
             subprocess.run(wait_cmd, shell=True)
 
-    def rename_files(
-        self, file: Path, part: str, type: str, rename=False
-    ):
+    def rename_files(self, file: Path, part: str, type: str, rename=False):
         """Rename and/or move files.
 
         ...
@@ -231,7 +232,3 @@ class Subject:
             file.rename(file_name)
 
         return file_name
-    
-    def match_filenames(self):
-
-        return

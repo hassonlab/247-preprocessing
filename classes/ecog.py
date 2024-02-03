@@ -33,7 +33,7 @@ class Ecog:
         data (NumPy array): EDF channel data.
     """
 
-    def __init__(self, config_type: str, sid: str, file):
+    def __init__(self, args, file):
         """Initializes the instance based on subject identifier and file identifier.
 
         Args:
@@ -41,7 +41,7 @@ class Ecog:
           file (str): Filename.
         """
 
-        self.sid = sid
+        self.sid = args.sid
         self.name = file
         self.non_electrode_id = ["SG", "EKG", "DC"]
 
@@ -62,7 +62,7 @@ class Ecog:
         """Calculate EDF end datetime from start datetime and file duration."""
         # edf_dur_seconds = self.nRecords*self.recDurSec
         edf_duration = dt.timedelta(seconds=self.ecog_hdr["Duration"])
-        self.edf_enddatetime = self.ecog_hdr["startdate"] + edf_duration
+        self.enddate = self.ecog_hdr["startdate"] + edf_duration
 
     def read_channels(self, onset_sec, offset_sec, **chan):
         """Read EDF channels for a certain time frame.
@@ -85,6 +85,8 @@ class Ecog:
         chan_nums = range(chan["start"], chan["end"])
 
         num_samps = offset_sec * self.samp_rate - onset_sec * self.samp_rate
+
+        # TODO: (IMPORTANT) Memory issue with large arrays
         data = np.empty([chan["end"] - chan["start"], num_samps])
 
         ecog_data = pyedflib.EdfReader(str(self.name))

@@ -21,10 +21,8 @@ jobs:
             # Commit, if changes were made
             - uses: stefanzweifel/git-auto-commit-action@v5
     linter_name:
-        name: runner / black formatter
+        name: Lint
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
-            - uses: rickstaa/action-black@v1
-              with:
-                black_args: ". --check"
+            - uses: actions/checkout@v3
+            - uses: psf/black@stable
