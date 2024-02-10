@@ -5,7 +5,6 @@ import subprocess
 import pandas as pd
 from pathlib import Path
 from autologging import traced, logged
-from word2number import w2n
 
 # TODO: need more consistency in using path + file name vs. just file name in classes
 

@@ -33,7 +33,7 @@ class Ecog:
         data (NumPy array): EDF channel data.
     """
 
-    def __init__(self, args, file):
+    def __init__(self, sid, filename):
         """Initializes the instance based on subject identifier and file identifier.
 
         Args:
@@ -41,8 +41,8 @@ class Ecog:
           file (str): Filename.
         """
 
-        self.sid = args.sid
-        self.name = file
+        self.sid = sid
+        self.filename = filename
         self.non_electrode_id = ["SG", "EKG", "DC"]
 
         self.__log.info("User: " + getpass.getuser())
