@@ -118,7 +118,9 @@ class Transcript:
 
         Note: this function should only be used if this information is not in the header of the audio file.
         """
-        audiotimestamps = pd.read_csv(self.file.parents[2] / "audio" / (self.sid + "_timestamps.csv"))
+        audiotimestamps = pd.read_csv(
+            self.file.parents[2] / "audio" / (self.sid + "_timestamps.csv")
+        )
 
         # NOTE: 798 has 2 mics, 2 audio files listed. This needs to be changed in the audio timestamps code.
         audiotimestamps = audiotimestamps[0::2]
@@ -131,8 +133,7 @@ class Transcript:
 
         return onset_day, onset_time
 
-
-    def agg_silences(self, silence_file):
+    def agg_silences(self, silence_file: pd.DataFrame):
         """Add silence information to transcript.
 
         Args:
@@ -143,7 +144,7 @@ class Transcript:
         # TODO: speaker and utterance_idx should be inherited where the silence type is not no speech.
         # Re-time transcript to adjust for cropped portions (silences)
         for onset, offset in zip(
-            silence_file.silence_onsets, silence_file.silence_offsets
+            silence_file.silence_osnsets, silence_file.silence_offsets
         ):
             self.transcript.loc[
                 self.transcript.onset > self.origin + onset, ["onset", "offset"]
@@ -172,8 +173,8 @@ class Transcript:
         """Add audio date-time inofrmation.
 
         Args:
-            onset_day (str)
-            onset_time (str)
+            onset_day (str): Date audio file recording begins
+            onset_time (str): Time audio file recording begings
         """
 
         # TODO: Consider moving this for flexibility
@@ -192,7 +193,7 @@ class Transcript:
         """Compress transcript.
 
         Args:
-            factor (float): how much to compress times by.
+            factor (float): Factor by which to extend or compress word timings.
         """
         # Adjust for 5% slow down
         self.transcript.onset = self.transcript.onset - self.transcript.onset * factor

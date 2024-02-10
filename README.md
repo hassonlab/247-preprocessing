@@ -18,18 +18,18 @@ Prepare data collected under the 24/7 project for analysis.
 #### Step 01: Transfer preparation
 ...
 #### Step 02: Subject preparation
-`python pipeline.py --sid sub-XXX --steps 2`
+`python pipeline.py --nyu_id NY### --sid sub-### --steps 2`
 #### Step 03: ECoG preparation
 Run for every subject EDF file:\
-`python pipeline.py --sid sub-XXX --steps 3`
+`python pipeline.py --sid sub-### --steps 3`
 
 #### Step 04: Audio preparation
 Run for every subject de-identified audio file:\
-`python pipeline.py --sid sub-XXX --steps 4`
+`python pipeline.py --sid sub-### --steps 4`
 
 #### Step 05: Transcript preparation
 Run for every subject transcript file:\
-`python pipeline.py --sid sub-XXX --steps 5`
+`python pipeline.py --sid sub-### --steps 5`
 
 #### Step 06: Subject summarization
 ...

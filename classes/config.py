@@ -1,7 +1,8 @@
 import yaml
 import argparse
 from pathlib import Path
-from configobj import ConfigObj
+
+# from configobj import ConfigObj
 from configparser import ConfigParser, ExtendedInterpolation
 
 
@@ -22,29 +23,31 @@ class Config:
         parser.add_argument("--nyu_id", type=str)
         parser.add_argument("--sid", type=str)
         parser.add_argument("--input_name", nargs="*", default=None)
-        parser.add_argument("--steps", nargs="*", default=[2,3,4])
+        parser.add_argument("--steps", nargs="*", default=["2", "3", "4", "5"])
 
         args = parser.parse_args()
 
         return args
-    
+
     def write_config(self):
-        #config = ConfigObj(interpolation='ConfigParser')
+        # config = ConfigObj(interpolation='ConfigParser')
         config = ConfigParser(interpolation=ExtendedInterpolation())
 
         self.base_path = Path("/mnt/cup/labs/hasson/247/subjects/") / self.sid
 
         config.filename = self.base_path / "test.ini"
-        config['file_id'] = file_id = {'sid': self.sid}
+        config["file_id"] = file_id = {"sid": self.sid}
         config.sid = self.sid
-        filenames = {"sid": self.sid,
+        filenames = {
+            "sid": self.sid,
             "audio_downsampled": self.base_path
             / "audio/audio-512Hz/{sid}_Part{part}_audio-512Hz.wav",
             "audio_deid": self.base_path
             / "audio/audio-deid/%(sid)s_Part%(part)s_audio-deid.wav",
             "audio_transcribe": self.base_path
             / "audio/audio-transcribe/%(sid)s_Part%(part)s_audio-transcribe.wav",
-            "ecog_raw": self.base_path / "ecog/ecog-raw/%(sid)s_Part%(part)s_ecog-raw.EDF",
+            "ecog_raw": self.base_path
+            / "ecog/ecog-raw/%(sid)s_Part%(part)s_ecog-raw.EDF",
             "ecog_processed": self.base_path
             / "ecog/ecog-processed/%(sid)s_Part%(part)s_ecog-processed.EDF",
             "transcript": self.base_path / "transcript/xml/",
@@ -64,9 +67,9 @@ class Config:
             "dest_endpoint_id": "6ce834d6-ff8a-11e6-bad1-22000b9a448b",
         }
 
-        config['filenames'] = filenames
+        config["filenames"] = filenames
         self.config = config
-        #config.write()
+        # config.write()
 
     def read_config(self):
         config = ConfigObj(self.filename)
@@ -84,7 +87,8 @@ class Config:
             "ecog_raw": self.base_path / "ecog/ecog-raw/{sid}_{part}_ecog-raw.EDF",
             "ecog_processed": self.base_path
             / "ecog/ecog-processed/{sid}_{part}_ecog-processed.EDF",
-            "transcript": self.base_path / "transcript/xml/{sid}_{part}_verbit-transcript.xml",
+            "transcript": self.base_path
+            / "transcript/xml/{sid}_{part}_verbit-transcript.xml",
             "log": self.base_path / "log/",
             "silence": self.base_path / "notes/deid/{sid}_{part}_silences.csv",
             "anat": self.base_path / "anat/",
@@ -114,3 +118,21 @@ class Config:
         with open(self.base_path / "test.yaml", "r") as file:
             # TODO: safe_load (?) might have to change how I'm writing the file
             self.config = yaml.load(file, Loader=yaml.BaseLoader)
+
+    def config_steps(self):
+
+        self.steps = {
+            (1, "00_setup"): {1: "configure_princeton_paths", 2: "configure_nyu_paths"},
+            (2, "01_subject_prep"): {
+                1: "create_directories",
+                2: "transfer_files",
+                3: "edf_list",
+            },
+            (3, "02_ecog_prep"): {
+                "iterate_on": "edf_list",
+                1: "initiate_instance",
+                2: "read_EDF_header",
+            },
+        }
+
+        return

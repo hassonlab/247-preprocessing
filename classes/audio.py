@@ -44,7 +44,7 @@ class Audio:
         # play(audioPart)
         # NOTE: pydub does things in milliseconds
 
-    def crop_audio(self,silence_times):
+    def crop_audio(self, silence_times):
         """Remove marked segments from audio. For uploading for transcription."""
         # TODO: The deid audio files might be split parts
         # TODO: Do more checks
@@ -52,7 +52,9 @@ class Audio:
         # Get speech times from silence times
         # extract sid and part
         # format
-        speech_onsets = np.array(silence_times.silence_offsets.view(np.int64) / int(1e6))
+        speech_onsets = np.array(
+            silence_times.silence_offsets.view(np.int64) / int(1e6)
+        )
         speech_offsets = np.roll(
             silence_times.silence_onsets.view(np.int64) / int(1e6), -1
         )
