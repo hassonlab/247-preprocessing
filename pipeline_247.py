@@ -65,7 +65,6 @@ def ecog_prep(ecog_file: Ecog):
     """Split and process ECoG signal"""
     ecog_file.read_EDFHeader()
     ecog_file.end_datetime()
-    breakpoint()
     ecog_file.read_channels(10, 100000, start=0, end=10)
 
     # TODO: Figure out how we're splitting files
