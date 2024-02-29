@@ -7,7 +7,7 @@ from configparser import ConfigParser, ExtendedInterpolation
 
 
 class Config:
-    def __init__(self, sid, nyu_id=None):
+    def __init__(self, sid):
         """Initializes the instance based on subject identifier.
 
         Args:
@@ -15,15 +15,16 @@ class Config:
           nyu_id (str, optional): Subject identifier on NYU server.
         """
         self.sid = sid
-        if nyu_id:
-            self.nyu_id = nyu_id
 
     def arg_parse():
         parser = argparse.ArgumentParser()
-        parser.add_argument("--nyu_id", type=str)
         parser.add_argument("--sid", type=str)
         parser.add_argument("--input_name", nargs="*", default=None)
-        parser.add_argument("--steps", nargs="*", default=["2", "3", "4", "5"])
+        parser.add_argument(
+            "--steps",
+            nargs="*",
+            default=["subject_prep", "ecog_prep", "audio_prep", "transcript_prep"],
+        )
 
         args = parser.parse_args()
 
@@ -78,26 +79,26 @@ class Config:
         """Configurable filepaths."""
         self.base_path = Path("/mnt/cup/labs/hasson/247/subjects/") / self.sid
         self.filenames = {
-            "audio_downsampled": self.base_path
-            / "audio/audio-512Hz/{sid}_{part}_audio-512Hz.wav",
-            "audio_deid": self.base_path
-            / "audio/audio-deid/{sid}_{part}_audio-deid.wav",
-            "audio_transcribe": self.base_path
-            / "audio/audio-transcribe/{sid}_{part}_audio-transcribe.wav",
-            "ecog_raw": self.base_path / "ecog/ecog-raw/{sid}_{part}_ecog-raw.EDF",
-            "ecog_processed": self.base_path
-            / "ecog/ecog-processed/{sid}_{part}_ecog-processed.EDF",
+            "audio-512Hz": self.base_path
+            / "audio/audio-512Hz/{sid}_Part{part}_audio-512Hz.wav",
+            "audio-deid": self.base_path
+            / "audio/audio-deid/{sid}_Part{part}_audio-deid.wav",
+            "audio-transcribe": self.base_path
+            / "audio/audio-transcribe/{sid}_Part{part}_audio-transcribe.wav",
+            "ecog-raw": self.base_path / "ecog/ecog-raw/{sid}_Part{part}_ecog-raw.EDF",
+            "ecog-processed": self.base_path
+            / "ecog/ecog-processed/{sid}_Part{part}_ecog-processed.EDF",
             "transcript": self.base_path
-            / "transcript/xml/{sid}_{part}_verbit-transcript.xml",
+            / "transcript/xml/{sid}_Part{part}_verbit-transcript.xml",
             "log": self.base_path / "log/",
-            "silence": self.base_path / "notes/deid/{sid}_{part}_silences.csv",
+            "silence": self.base_path / "notes/deid/{sid}_Part{part}_silences.csv",
             "anat": self.base_path / "anat/",
             "issue": self.base_path / "issue/",
         }
 
     def configure_paths_nyu(self):
         """Configurable filepaths on NYU server."""
-        nyu_base_path = Path(self.nyu_id)
+        nyu_base_path = Path("NY" + self.sid)
         self.nyu_paths = {
             "nyu_base_path": nyu_base_path,
             "nyu_ecog_path": nyu_base_path / "Dayfiles/",

@@ -42,7 +42,7 @@ class Ecog:
         """
 
         self.sid = sid
-        self.filename = filename
+        self.name = filename
         self.non_electrode_id = ["SG", "EKG", "DC"]
 
         self.__log.info("User: " + getpass.getuser())
@@ -76,18 +76,20 @@ class Ecog:
         def read_elec_signal(chn_idx):
             return ecog_data.readSignal(chn_idx, onset_sec, offset_sec)
 
-        # If channels not specified on function call, read all channels
-        if not chan["start"]:
-            chan["start"] = 0
-        if not chan["end"]:
-            chan["end"] = len(self.ecog_hdr["channels"])
-
-        chan_nums = range(chan["start"], chan["end"])
+        # If channels not specified on function call, read all 
+        if "chan_list" not in chan:
+            if "start" not in chan:
+                chan["start"] = 0
+            if "end" not in chan:
+                chan["end"] = len(self.ecog_hdr["channels"])
+            chan_nums = range(chan["start"], chan["end"])
+        elif "chan_list" in chan:
+            chan_nums = chan["chan_list"]
 
         num_samps = offset_sec * self.samp_rate - onset_sec * self.samp_rate
 
         # TODO: (IMPORTANT) Memory issue with large arrays
-        data = np.empty([chan["end"] - chan["start"], num_samps])
+        data = np.empty([len(chan_nums), num_samps])
 
         ecog_data = pyedflib.EdfReader(str(self.name))
         # for idx, chan in enumerate(chan_nums):
@@ -129,7 +131,7 @@ class Ecog:
         )
 
         # Temp name (?) with datetime
-        outname = str(self.ecog_processed_path / self.name)
+        outname = str(self.name)
         pyedflib.highlevel.write_edf(
             outname, self.data, signal_hdrs, header=self.ecog_hdr
         )

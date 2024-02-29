@@ -1,4 +1,3 @@
-import time
 import logging
 import pandas as pd
 from autologging import TRACE
@@ -15,62 +14,39 @@ def subject_prep(subject_n: Subject):
     """Set-up for processing new subject"""
 
     # Create parent directory for subject
-    if not subject_n.base_path.exists():
-        subject_n.create_dir()
-
-    # TODO: IMPORTANT: Additional checks to make sure order is correct when sorting
+    subject_n.create_dir()
 
     # Transfer files
     subject_n.transfer_files()
 
-    subject_n.edf_list()
     # Adjust file names for consistency
-    for part, file in enumerate(sorted(subject_n.edf_files)):
-        subject_n.rename_files(
-            file.parents[1], file, str(part + 1).zfill(3), "ecog_raw", rename=True
-        )
-        # At this point, the directory should be empty and can be removed
-        while file.exists():
-            time.sleep(1)
-        file.parents[0].rmdir()
+    for filetype in [
+        subject_n.edf_files,
+        subject_n.audio_512_files,
+        subject_n.audio_deid_files,
+    ]:
+        # TODO: IMPORTANT: Additional checks to make sure order is correct when sorting
+        subject_n.rename_files(sorted(filetype), rename=True)
+
+    # Create subject-level transcript to append to
+    subject_n.create_subject_transcript()
 
     # NOTE: We can get the correct naming when we run downsampling/deid on nyu server
-    for part, file in enumerate(sorted(subject_n.audio_512_files)):
-        subject_n.rename_files(
-            file.parents[1],
-            file,
-            str(part + 1).zfill(3),
-            "audio_downsampled",
-            rename=True,
-        )
-
-        # TODO: needs more testing
-        while any(file.parents[0].iterdir()):
-            time.sleep(1)
-        file.parents[0].rmdir()
-
-    for part, file in enumerate(sorted(subject_n.audio_deid_files)):
-        subject_n.rename_files(
-            file.parents[0], file, str(part + 1).zfill(3), "audio_deid", rename=True
-        )
-
-    subject_n.silence_list()
-    for part, file in enumerate(sorted(subject_n.silence_files)):
-        subject_n.rename_files(
-            file.parents[0], file, str(part + 1).zfill(3), "silence", rename=True
-        )
 
 
-def ecog_prep(ecog_file: Ecog):
+def ecog_prep(subject_n: Subject):
     """Split and process ECoG signal"""
+
+    for file in subject_n.edf_files:
+        ecog_file = Ecog(subject_n.sid, file)
+
     ecog_file.read_EDFHeader()
     ecog_file.end_datetime()
-    breakpoint()
-    ecog_file.read_channels(10, 100000, start=0, end=10)
+    ecog_file.read_channels(10, 10000)
 
     # TODO: Figure out how we're splitting files
     ecog_file.process_ecog()
-    ecog_file.name = "".join([ecog_file.sid, "_ecog-raw_", "0", ".edf"])
+    ecog_file.name = subject_n.rename_files(ecog_file.name, "ecog-processed")
     ecog_file.write_edf()
 
 
@@ -99,30 +75,31 @@ def transcript_prep(transcript_file: Transcript, silence_times: Silence):
 def main():
     # Get arguments
     args = Config.arg_parse()
-    nyu_id = args.nyu_id
-    new_id = args.sid
+    sid = args.sid
     steps = args.steps
 
     # Create config
-    config = Config(new_id, nyu_id)
+    config = Config(sid)
     config.configure_paths_old()
     config.configure_paths_nyu()
 
     # Generate instance of subject class
-    subject_n = Subject(new_id, create_config=True)
+    subject_n = Subject(sid, create_config=True)
     subject_n.filenames = config.filenames
     subject_n.__dict__.update(config.nyu_paths.items())
-    # TODO: decide what to do with Subject
 
     # Get list of files to loop over for processing
     subject_n.audio_list()
     subject_n.edf_list()
+    subject_n.silence_list()
 
-    # Step_002: subject_prep: Prepare file structure, transfer files for processing new patient
-    if "2" in steps:
-        subject_prep(subject_n)
-    else:
-        print("Skipping step_002: subject_prep")
+    fun_list = [subject_prep, ecog_prep, audio_prep, transcript_prep]
+
+    for fun in fun_list:
+        if fun.__name__ in steps:
+            fun(subject_n)
+
+    breakpoint()
 
     logging.basicConfig(
         level=TRACE,
@@ -131,9 +108,6 @@ def main():
     )
 
     config.write_config_old()
-
-    # Create subject-level transcript to append to
-    subject_n.create_subject_transcript()
 
     # Loop over files for processing
     for file in subject_n.edf_files:
