@@ -1,3 +1,4 @@
+import time
 import logging
 import pandas as pd
 from autologging import TRACE
