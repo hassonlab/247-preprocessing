@@ -2,6 +2,7 @@ import json
 import logging
 import getpass
 import subprocess
+import time
 import pandas as pd
 from pathlib import Path
 from autologging import traced, logged
@@ -65,13 +66,13 @@ class Subject:
         """Retruns list of audio files present in subject directory."""
         audio_512_files = [
             f
-            for f in self.filenames["audio_downsampled"].parent.rglob("[!.]*")
+            for f in self.filenames["audio-512Hz"].parent.rglob("[!.]*")
             if f.is_file()
         ]
         self.audio_512_files = audio_512_files
 
         audio_deid_files = [
-            f for f in self.filenames["audio_deid"].parent.rglob("[!.]*") if f.is_file()
+            f for f in self.filenames["audio-deid"].parent.rglob("[!.]*") if f.is_file()
         ]
         self.audio_deid_files = audio_deid_files
 
@@ -79,7 +80,7 @@ class Subject:
         """Retruns list of EDF files present in subject directory."""
         # TODO: I don't know if this is consistant across subject (on nyu server)
         edf_files = [
-            f for f in self.filenames["ecog_raw"].parent.rglob("[!.]*") if f.is_file()
+            f for f in self.filenames["ecog-raw"].parent.rglob("[!.]*") if f.is_file()
         ]
         self.edf_files = edf_files
 
@@ -130,9 +131,9 @@ class Subject:
         """Create directory and standard sub-directories for a new subject."""
         for path in self.filenames:
             if self.filenames[path].suffix:
-                self.filenames[path].parent.mkdir(parents=True)
+                self.filenames[path].parent.mkdir(parents=True, exist_ok=True)
             elif not self.filenames[path].suffix:
-                self.filenames[path].mkdir(parents=True)
+                self.filenames[path].mkdir(parents=True, exist_ok=True)
 
     def transfer_files(
         self, filetypes: list = ["ecog", "audio-512Hz", "audio-deid", "silence"]
@@ -208,26 +209,49 @@ class Subject:
             wait_cmd = " ".join(["globus", "task", "wait", tsk])
             subprocess.run(wait_cmd, shell=True)
 
-    def rename_files(self, file: Path, part: str, type: str, rename=False):
+    def rename_files(self, files: list, config_key=None, rename=False) -> Path:
         """Rename and/or move files.
 
         ...
 
         Attributes:
-            newpath (PosixPath): new path
-            part (str): file identifier.
-            file (PosixPath): file path.
-            part (str): file part
-            type (str): label indicating file type.
-            ext (str): file extension.
+            file (list): list file Paths.
             rename (Bool): Whether to just get file name in correct format, or rename file in directory
         """
         # Ecog and downsampled audio files are not transferred with correct names
         # TODO: What do we want to do with multiple audio tracks?
-        # TODO: Re-evaluate this function
-        file_name = Path(str(self.filenames[type]).format(sid=self.sid, part=part))
-        # rename files and move directory
-        if rename == True:
-            file.rename(file_name)
+        # TODO: typing forces list?
+        # TODO: improve this method
+        if type(files) is not list:
+            files = [files]
+
+        if config_key is None:
+            for part, file in enumerate(files):
+                try:
+                    config_type = self.filenames[file.parents[1].stem]
+                except:
+                    config_type = self.filenames[file.parent.stem]
+
+                file_name = Path(
+                    str(config_type).format(
+                        sid=self.sid, part=str(part + 1).zfill(3)
+                    )
+                )
+                # rename files and move directory
+                # TODO: this doesn't work correctly
+                if rename == True:
+                    file.rename(file_name)
+
+                    if file.parent != config_type.parent:
+                        for child in file.parent.iterdir(): child.unlink()
+                        if not any(file.parent.iterdir()):
+                            file.parent.rmdir()
+        elif config_key is not None:
+            part = files[0].name.split('_')[1][-3:]
+            file_name = Path(
+                str(self.filenames[config_key]).format(
+                    sid=self.sid, part=part
+                )
+            )
 
         return file_name
