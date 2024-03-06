@@ -77,7 +77,8 @@ class Config:
 
     def configure_paths_old(self):
         """Configurable filepaths."""
-        self.base_path = Path("/mnt/cup/labs/hasson/247/subjects/") / self.sid
+        #self.base_path = Path("/mnt/cup/labs/hasson/247/subjects/") / self.sid
+        self.base_path = Path("/projects/HASSON/247/data/subjects/") / self.sid
         self.filenames = {
             "audio-512Hz": self.base_path
             / "audio/audio-512Hz/{sid}_Part{part}_audio-512Hz.wav",
