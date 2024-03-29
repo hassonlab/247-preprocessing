@@ -4,6 +4,7 @@ import getpass
 import numpy as np
 import datetime as dt
 import multiprocessing
+import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
 from autologging import traced, logged
 
@@ -57,6 +58,24 @@ class Ecog:
             str(self.name), read_annotations=True
         )
         self.samp_rate = int(self.ecog_hdr["SignalHeaders"][0]["sample_rate"])
+
+    def read_channel_loc(self, filename):
+
+        channel_locs = pd.read_csv(filename)
+        self.channel_locs = channel_locs
+
+        return channel_locs
+    
+    def make_elec_loc_dict():
+
+        keys = ["chan_idx",
+                "elec_name_hdr",
+                "elec_name_txt",
+                "elec_coor_MNI",
+                "elec_coor_T1",
+                "elec_reg"]
+
+        return
 
     def end_datetime(self):
         """Calculate EDF end datetime from start datetime and file duration."""

@@ -13,23 +13,24 @@ Prepare data collected under the 24/7 project for analysis.
 2. Create your conda environment with required packages:  
 `conda env create -f environment.yml`
 ### Usage
+`python pipeline_247.py --sid sub-###`
 #### Step 00: Data collection
 ...
 #### Step 01: Transfer preparation
 ...
 #### Step 02: Subject preparation
-`python pipeline_247.py --nyu_id NY### --sid sub-### --steps 2`
+`python pipeline_247.py --sid sub-### --steps subject_prep`
 #### Step 03: ECoG preparation
 Run for every subject EDF file:\
-`python pipeline_247.py --sid sub-### --steps 3`
+`python pipeline_247.py --sid sub-### --steps ecog_prep`
 
 #### Step 04: Audio preparation
 Run for every subject de-identified audio file:\
-`python pipeline_247.py --sid sub-### --steps 4`
+`python pipeline_247.py --sid sub-### --steps audio_prep`
 
 #### Step 05: Transcript preparation
 Run for every subject transcript file:\
-`python pipeline_247.py --sid sub-### --steps 5`
+`python pipeline_247.py --sid sub-### --steps transcript_prep`
 
 #### Step 06: Subject summarization
 ...
