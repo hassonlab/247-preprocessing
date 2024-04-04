@@ -1,4 +1,4 @@
-name: 247-preprocessing
+name: 247-prep
 channels:
   - conda-forge
   - defaults
@@ -112,4 +112,4 @@ dependencies:
     - wrapt==1.16.0
     - yapf==0.40.2
     - zipp==3.17.0
-prefix: /usr/people/baubrey/.conda/envs/247-preprocessing
+prefix: /home/kw1166/.conda/envs/247-prep

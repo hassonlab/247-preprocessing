@@ -1,1 +1,5 @@
 **/__pycache__
+.hf_token
+data/
+logs/
+results/
