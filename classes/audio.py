@@ -23,6 +23,7 @@ import gc
 
 
 HF_TOKEN = os.environ["HF_TOKEN"]
+WHISPER_FS = 16000
 
 
 @traced
@@ -42,17 +43,36 @@ class Audio:
         transcribe_audio: Audio data for transcription (output audio), DType: Pydub AudioSegment.
     """
 
-    def __init__(self, sid: str, file, device="cuda"):
+    def __init__(self, sid: str, conv_idx, file, device="cuda"):
         """Initializes the instance based on file identifier.
 
         Args:
           fid: File identifier.
         """
         self.sid = sid
+        self.conv_idx = conv_idx
         self.audio_filename = file
         self.device = device
 
+        self.reset_audio_info()
+
         self.__log.info("User: " + getpass.getuser())
+
+    def reset_audio_info(self):
+        self.audio_fs = None
+        self.audio_len = None
+        self.audio_sample_len = None
+
+    def read_audio_print(self, package):
+        """Read audio signal using pydub package.
+
+        Args:
+          package: package used to load audio
+        """
+        print(f"Loading {self.audio_filename} using {package} package")
+        print(f"Sampling rate: {self.audio_fs}")
+        print(f"Audio Length (s): {self.audio_len}")
+        print(f"Total number of samples: {self.audio_sample_len}")
 
     def read_audio_pydub(self):
         """Read audio signal using pydub package.
@@ -60,7 +80,7 @@ class Audio:
         Args:
           filepath: Path to audio file.
         """
-        print(f"Loading {self.audio_filename} using pydub package")
+        self.reset_audio_info()
         self.audio = AudioSegment.from_wav(self.audio_filename)
 
     def read_audio_wavfile(self):
@@ -69,10 +89,11 @@ class Audio:
         Args:
           filepath: Path to audio file.
         """
+        self.reset_audio_info()
         self.audio_fs, self.audio = wavfile.read(self.audio_filename)
-        print(f"Loading {self.audio_filename} using wavfile package")
-        print(f"Sampling rate: {self.audio_fs}")
-        print(f"Audio Length (s): {len(self.audio) / self.audio_fs}")
+        self.audio_sample_len = len(self.audio)
+        self.audio_len = self.audio_sample_len / self.audio_fs
+        self.read_audio_print("wavfile")
 
     def read_audio_torchaudio(self):
         """Read audio signal using torchaudio package.
@@ -80,9 +101,14 @@ class Audio:
         Args:
           filepath: Path to audio file.
         """
-        self.audio, self.audio_fs = torchaudio.load(self.audio_filename, normalize=False)
-        print(f"Loading {self.audio_filename} using torchaudio package")
-        print(f"Sampling rate: {self.audio_fs}")
+        self.reset_audio_info()
+        # self.audio, self.audio_fs = torchaudio.load(
+        #     self.audio_filename, normalize=False
+        # )
+        self.audio, self.audio_fs = torchaudio.load(self.audio_filename)
+        self.audio_sample_len = self.audio.shape[1]
+        self.audio_len = self.audio_sample_len / self.audio_fs
+        self.read_audio_print("torchaudio")
 
     def read_audio_whisper(self):
         """Read audio signal using whisper package (downsamples to 16k).
@@ -90,8 +116,12 @@ class Audio:
         Args:
           filepath: Path to audio file.
         """
-        print(f"Loading {self.audio_filename} using whisperx package")
+        self.reset_audio_info()
         self.audio = whisper.load_audio(self.audio_filename)
+        self.audio_fs = WHISPER_FS
+        self.audio_sample_len = len(self.audio)
+        self.audio_len = self.audio_sample_len / self.audio_fs
+        self.read_audio_print("whisper")
 
     def read_audio_whisperx(self):
         """Read audio signal using whisperx package (downsamples to 16k).
@@ -99,8 +129,12 @@ class Audio:
         Args:
           filepath: Path to audio file.
         """
-        print(f"Loading {self.audio_filename} using whisperx package")
+        self.reset_audio_info()
         self.audio = whisperx.load_audio(self.audio_filename)
+        self.audio_fs = WHISPER_FS
+        self.audio_sample_len = len(self.audio)
+        self.audio_len = self.audio_sample_len / self.audio_fs
+        self.read_audio_print("whisperx")
 
     def whisperx_transcribe(self, model):
         """Transcribe using whisperx (VAD + transcription)
@@ -162,11 +196,12 @@ class Audio:
         """
         data = []
         word_idx = 0
-        for segment in self.result["segments"]:
+        for segment in self.transcribe_result["segments"]:
             for word in segment["words"]:
                 data.append(pd.DataFrame(word, index=[word_idx]))
                 word_idx += 1
-        self.datum = pd.concat(data)
+        datum = pd.concat(data)
+        return datum
 
     def whisperx_pipeline(self, model):
         """Format whisperx results into transcript datum
@@ -174,10 +209,31 @@ class Audio:
         Args:
           None
         """
+        self.read_audio_whisperx()
         self.whisperx_transcribe(model)
         self.whisperx_align()
         self.whisperx_diarization()
-        self.whisperx_get_datum()
+        return self.whisperx_get_datum()
+
+    def pyannote_get_datum(self, input):
+        """Retrn pyannote output as datum
+
+        Args:
+          input: pyannote output from vad or osd pipeline
+        """
+        df = pd.DataFrame(
+            input.itertracks(yield_label=True), columns=["segment", "label", "speaker"]
+        )
+        df["start"] = df.segment.apply(lambda x: x.start)
+        df["end"] = df.segment.apply(lambda x: x.end)
+        df["sid"] = self.sid
+        df["conv_idx"] = self.conv_idx
+        df["audio_fs"] = self.audio_fs
+        df["audio_sample_len"] = self.audio.shape[1]
+        df = df.loc[
+            :, ("sid", "conv_idx", "start", "end", "audio_fs", "audio_sample_len")
+        ]
+        return df
 
     def pyannote_vad(self):
         """Voice activity detection using pyannote
@@ -198,11 +254,8 @@ class Audio:
         pipeline = VoiceActivityDetection(segmentation=model)
         pipeline.instantiate(HYPER_PARAMETERS)
         vad = pipeline(self.audio_filename)
-        self.vad_df = pd.DataFrame(
-            vad.itertracks(yield_label=True), columns=["segment", "label", "speaker"]
-        )
-        self.vad_df["start"] = self.vad_df.segment.apply(lambda x: x.start)
-        self.vad_df["end"] = self.vad_df.segment.apply(lambda x: x.end)
+        vad_df = self.pyannote_get_datum(vad)
+        return vad_df
 
     def pyannote_osd(self):
         """Overlapping speech detection using pyannote
@@ -223,45 +276,8 @@ class Audio:
         pipeline = OverlappedSpeechDetection(segmentation=model)
         pipeline.instantiate(HYPER_PARAMETERS)
         osd = pipeline(self.audio_filename)
-        self.osd_df = pd.DataFrame(
-            osd.itertracks(yield_label=True), columns=["segment", "label", "speaker"]
-        )
-        self.osd_df["start"] = self.osd_df.segment.apply(lambda x: x.start)
-        self.osd_df["end"] = self.osd_df.segment.apply(lambda x: x.end)
-
-    def pyannote_diarization(self):
-        """Diarization and speaker embeddings with pyannote
-
-        Args:
-          None
-        """
-        print("Diarization with Pyannote")
-        # Diarization
-        pipeline3 = Pipeline.from_pretrained(
-            "pyannote/speaker-diarization-3.1", use_auth_token=HF_TOKEN
-        )
-        pipeline3.to(torch.device("cuda"))
-        waveform, sample_rate = torchaudio.load(self.audio_filename)
-        dia, speaker_embs = pipeline3(
-            {"waveform": waveform, "sample_rate": sample_rate}, return_embeddings=True
-        )
-        self.dia_df = pd.DataFrame(
-            dia.itertracks(yield_label=True), columns=["segment", "label", "speaker"]
-        )
-        self.dia_df["start"] = self.dia_df.segment.apply(lambda x: x.start)
-        self.dia_df["end"] = self.dia_df.segment.apply(lambda x: x.end)
-        self.dia_df["len"] = waveform.shape[1] / sample_rate
-        self.dia_df["sid"] = self.sid
-        self.dia_df["conv"] = self.conv_idx
-        self.dia_df = self.dia_df.loc[
-            :, ("sid", "conv", "speaker", "start", "end", "len")
-        ]
-
-        self.speaker_df = pd.DataFrame()
-        self.speaker_df["speaker"] = dia.labels()
-        self.speaker_df["embs"] = speaker_embs.tolist()
-        self.speaker_df["conv"] = self.conv_idx
-        self.speaker_df["sid"] = self.sid
+        osd_df = self.pyannote_get_datum(osd)
+        return osd_df
 
     def whisper_transcribe(self, model):
         """Transcribe using whisper (transcription)
