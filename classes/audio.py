@@ -74,6 +74,26 @@ class Audio:
         print(f"Audio Length (s): {self.audio_len}")
         print(f"Total number of samples: {self.audio_sample_len}")
 
+    def stereo_to_mono(self):
+        """Convert stereo wav file to mono.
+
+        Args:
+          None
+        """
+        if self.audio.shape[0] > 1:
+            print("Changing stereo to mono")
+            self.audio = torch.mean(self.audio, dim=0, keepdim=True)
+
+    def save_mono_pydub(self):
+        """Convert stereo wav file to mono and overwrite original audiofile.
+
+        Args:
+          None
+        """
+        self.read_audio_pydub()
+        self.audio.set_channels(1)
+        self.audio.export(self.audio_filename, format="wav")
+
     def read_audio_pydub(self):
         """Read audio signal using pydub package.
 
@@ -285,8 +305,24 @@ class Audio:
         Args:
           model: model-name
         """
-        model = whisper.load_model("tiny.en")
-        self.transcribe_result = model.transcribe(self.audio, language="en")
+        model = whisper.load_model(model)
+        transcribe_result = model.transcribe(self.audio, language="en")
+        datum = pd.DataFrame(transcribe_result["segments"])
+        datum = datum.loc[
+            :,
+            (
+                "id",
+                "seek",
+                "start",
+                "end",
+                "text",
+                "temperature",
+                "avg_logprob",
+                "compression_ratio",
+                "no_speech_prob",
+            ),
+        ]
+        return datum
 
     def crop_audio(self, silence_times):
         """Remove marked segments from audio. For uploading for transcription."""

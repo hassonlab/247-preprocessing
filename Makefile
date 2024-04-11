@@ -8,8 +8,8 @@ SID := 500
 CONV_IDX := 798_30s_test
 
 SID := 625
-CONV_IDX := $(shell seq 1 54)
 CONV_IDX := $(shell seq 1 1)
+CONV_IDX := $(shell seq 1 54)
 
 # SID := 676
 # CONV_IDX := $(shell seq 1 78)
@@ -17,9 +17,9 @@ CONV_IDX := $(shell seq 1 1)
 # SID := 7170
 # CONV_IDX := $(shell seq 1 24)
 
-# SID := 798
-# CONV_IDX := $(shell seq 0 14)
-# CONV_IDX := 3
+SID := 798
+# CONV_IDX := $(shell seq 1 15)
+
 
 CMD := echo
 CMD := python
@@ -45,7 +45,7 @@ audio-prep:
 	for conv in $(CONV_IDX); do \
 		$(CMD) audio_prep.py \
 			--sid $(SID) \
-			--model large-v2 \
+			--model large-v3 \
 			--conv-idx $$conv; \
 	done;
 

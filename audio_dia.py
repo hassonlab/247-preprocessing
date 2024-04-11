@@ -38,7 +38,7 @@ def pyannote_diarization(args, audio, sample_rate):
     dia_df["end"] = dia_df.segment.apply(lambda x: x.end)
     dia_df["len"] = audio.shape[1] / sample_rate
     dia_df["sid"] = args.sid
-    dia_df = dia_df.loc[:, ("sid", "conv", "speaker", "start", "end", "len")]
+    dia_df = dia_df.loc[:, ("sid", "speaker", "start", "end", "len")]
 
     # Get speaker embedding dataframe
     speaker_df = pd.DataFrame()
@@ -82,6 +82,7 @@ def main():
         print(idx, conv)
         audio = Audio(args.sid, idx, args.audio_filename % (conv, conv), args.device)
         audio.read_audio_torchaudio()
+        audio.stereo_to_mono()
         assert audio.audio_fs == SAMPLE_RATE
         vad_df = pd.read_csv(args.vad_filename % conv)
         vad_df["sample_start"] = (vad_df.start * audio.audio_fs).astype(int)

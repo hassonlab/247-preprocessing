@@ -21,13 +21,18 @@ def arg_parser():
     parser.add_argument("--model", type=str, required=True)
 
     args = parser.parse_args()
-    conv_dir = f"data/tfs/{args.sid}/*"
-    conv_list = sorted(glob.glob(conv_dir))
+    conv_list = sorted(glob.glob(f"data/tfs/{args.sid}/*"))
     conv_name = os.path.basename(conv_list[int(args.conv_idx) - 1])
     args.audio_filename = f"data/tfs/{args.sid}/{conv_name}/audio/{conv_name}_deid.wav"
 
-    for result_type in ["whisperx", "vad", "osd"]:
-        result_dir = os.path.join("results", args.sid, result_type)
+    # for result_type in ["whisperx", "vad", "osd", "whisper"]:
+    for result_type in ["whisper"]:
+        if "whisper" in result_type:
+            result_dir = os.path.join(
+                "results", args.sid, f"{result_type}_{args.model}"
+            )
+        else:
+            result_dir = os.path.join("results", args.sid, result_type)
         if not os.path.exists(result_dir):
             os.makedirs(result_dir)
 
@@ -44,16 +49,20 @@ def main():
 
     audio = Audio(args.sid, args.conv_idx, args.audio_filename, args.device)
 
-    ### WHISPERX PIPELINE ###
-    datum = audio.whisperx_pipeline(args.model)
-    datum.to_csv(args.out_filename % "whisperx", index=False)
+    # ### WHISPERX PIPELINE ###
+    # datum = audio.whisperx_pipeline(args.model)
+    # datum.to_csv(args.out_filename % f"whisperx_{args.model}", index=False)
 
-    ### PYANNOTE PIPELINE ###
-    audio.read_audio_torchaudio()
-    vad_df = audio.pyannote_vad()
-    vad_df.to_csv(args.out_filename % "vad", index=False)
-    osd_df = audio.pyannote_osd()
-    osd_df.to_csv(args.out_filename % "osd", index=False)
+    # ### PYANNOTE PIPELINE ###
+    # vad_df = audio.pyannote_vad()
+    # vad_df.to_csv(args.out_filename % "vad", index=False)
+    # osd_df = audio.pyannote_osd()
+    # osd_df.to_csv(args.out_filename % "osd", index=False)
+
+    ### WHISPER PIPELINE ###
+    audio.read_audio_whisper()
+    datum = audio.whisper_transcribe(args.model)
+    datum.to_csv(args.out_filename % f"whisper_{args.model}", index=False)
 
     return
 
