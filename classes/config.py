@@ -28,6 +28,8 @@ class Config:
 
     def configure_paths_della(self):
         """Configurable filepaths."""
+        #TODO: Handling multiple surf files
+        #TODO: Naming consistencies, electrode coordinate filenames
         #self.base_path = Path("/mnt/cup/labs/hasson/247/subjects/") / self.sid
         self.base_path = Path("/projects/HASSON/247/data/subjects/") / self.sid
         self.filenames = {
@@ -44,9 +46,12 @@ class Config:
             / "transcript/xml/{sid}_Part{part}_verbit-transcript.xml",
             "log": self.base_path / "log/",
             "silence": self.base_path / "notes/deid/{sid}_Part{part}_silences.csv",
-            "elec-loc-MNI": self.base_path / "anat/{sid}_T1T2_coor_MNI.txt",
-            "elec-loc-T1": self.base_path / "anat/{sid}_T1T2_coor_T1.txt",
-            "elec-loc-T1": self.base_path / "anat/{sid}_T1T2_T1_AnatomicalRegions.txt",
+            "elec-loc-MNI": (self.base_path / "anat/").glob("*_T1T2_coor_MNI*"),
+            "elec-loc-T1": (self.base_path / "anat/").glob("*_T1T2_coor_T1*"),
+            "elec-region": (self.base_path / "anat/").glob("*_lh_split_STG_MTG_AnatomicalRegions*"),
+            "brain-space": (self.base_path / "anat/").glob("*_pial_surf.mat"),
+            "coor-file": self.base_path / "anat/{sid}_coordinates.csv",
+            #"avg-brain-space": self.base_path / "anat/{sid}*_pial_surf.mat",
             "issue": self.base_path / "issue/",
         }
 

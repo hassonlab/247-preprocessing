@@ -9,6 +9,7 @@ from classes.ecog import Ecog
 from classes.audio import Audio
 from classes.silence import Silence
 from classes.transcript import Transcript
+from brainmap_new import Plots
 
 def get_silence_times(subject_n, file):
 
@@ -127,10 +128,10 @@ def main():
     config = Config(sid)
     config.configure_paths_della()
     config.configure_paths_nyu()
-    config.write_config()
+    #config.write_config()
 
     # Generate instance of subject class
-    subject_n = Subject(sid, create_config=True)
+    subject_n = Subject(sid)
     subject_n.filenames = config.filenames
     subject_n.__dict__.update(config.nyu_paths.items())
 
@@ -145,6 +146,12 @@ def main():
         if fun.__name__ in steps:
             print(fun.__name__ )
             fun(subject_n)
+
+    if "save_elec_imgs" in steps:
+        outname = ''
+        brainmap = Plots(config,outname)
+        #brainmap.create_coor_file()
+        brainmap.highlight_elec_imgs()
 
 if __name__ == "__main__":
     main()
