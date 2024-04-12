@@ -5,7 +5,7 @@ import subprocess
 import time
 import pandas as pd
 from pathlib import Path
-from autologging import traced, logged
+from autologging import traced, logged, TRACE
 
 # TODO: need more consistency in using path + file name vs. just file name in classes
 
@@ -24,7 +24,7 @@ class Subject:
         ecog_processed_path (PosixPath): Subject processed EDF directory.
     """
 
-    def __init__(self, sid: str, create_config=False):
+    def __init__(self, sid: str):
         """Initializes the instance based on subject identifier.
 
         Args:
@@ -53,14 +53,13 @@ class Subject:
         )
         logging.info(message + ", User: %s", getpass.getuser())
 
-        # start = timeit.default_timer()
-        # tracemalloc.start()
-        # current = tracemalloc.get_traced_memory()
-        # print(current)
-        # tracemalloc.stop()
-        # stop = timeit.default_timer()
+    def start_subject_log(self):
 
-        # print('Time: ', stop - start)
+        logging.basicConfig(
+            level=TRACE,
+            filename=(self.filenames["log"] / "sub.log"),
+            format="%(asctime)s %(levelname)s:%(name)s:%(funcName)s:%(message)s",
+        )
 
     def audio_list(self):
         """Retruns list of audio files present in subject directory."""
@@ -119,13 +118,6 @@ class Subject:
                 "utterance_idx",
             ]
         )
-
-    def create_summary(self):
-        """Create summary file for new patient, written to throughout pipeline."""
-        with open(
-            self.base_path / self.sid + "-summary.json", "w", encoding="utf-8"
-        ) as f:
-            json.dump(edf_wav_dict, f, ensure_ascii=False, indent=4)
 
     def create_dir(self):
         """Create directory and standard sub-directories for a new subject."""

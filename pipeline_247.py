@@ -9,6 +9,7 @@ from classes.ecog import Ecog
 from classes.audio import Audio
 from classes.silence import Silence
 from classes.transcript import Transcript
+from brainmap_new import Plots
 
 def get_silence_times(subject_n, file):
 
@@ -19,12 +20,12 @@ def get_silence_times(subject_n, file):
 
     return silence_times
 
-
 def subject_prep(subject_n: Subject):
     """Set-up for processing new subject"""
 
     # Create parent directory for subject
     subject_n.create_dir()
+    subject_n.start_subject_log()
 
     # Transfer files
     subject_n.transfer_files()
@@ -125,11 +126,12 @@ def main():
 
     # Create config
     config = Config(sid)
-    config.configure_paths_old()
+    config.configure_paths_della()
     config.configure_paths_nyu()
+    #config.write_config()
 
     # Generate instance of subject class
-    subject_n = Subject(sid, create_config=True)
+    subject_n = Subject(sid)
     subject_n.filenames = config.filenames
     subject_n.__dict__.update(config.nyu_paths.items())
 
@@ -145,19 +147,11 @@ def main():
             print(fun.__name__ )
             fun(subject_n)
 
-    breakpoint()
-
-    logging.basicConfig(
-        level=TRACE,
-        filename=(config.filenames["log"] / "sub.log"),
-        format="%(asctime)s %(levelname)s:%(name)s:%(funcName)s:%(message)s",
-    )
-
-    config.write_config_old()
-
-    # TODO: move this to end
-    # if not (subject_n.basePath / sid + '-summary.json').exists(): subject_n.create_summary()
-
+    if "save_elec_imgs" in steps:
+        outname = ''
+        brainmap = Plots(config,outname)
+        #brainmap.create_coor_file()
+        brainmap.highlight_elec_imgs()
 
 if __name__ == "__main__":
     main()

@@ -1,10 +1,6 @@
-import json
-import os.path
-from datetime import date
-import getpass
 import numpy as np
-from scipy import signal
 import matplotlib.pyplot as plt
+from scipy import signal
 
 
 def edf_wav_shift(ecog_dict, audio):
