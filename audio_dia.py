@@ -59,10 +59,15 @@ def arg_parser():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--sid", type=str, required=True)
+    parser.add_argument("--conv-idx", nargs="+", type=int, default=-1)
 
     args = parser.parse_args()
     conv_dir = f"data/tfs/{args.sid}/*"
-    args.conv_list = [os.path.basename(conv) for conv in sorted(glob.glob(conv_dir))]
+    conv_list = [os.path.basename(conv) for conv in sorted(glob.glob(conv_dir))]
+    if args.conv_idx == -1:
+        args.conv_list = conv_list
+    else:
+        args.conv_list = [conv_list[i - 1] for i in args.conv_idx]
     args.audio_filename = f"data/tfs/{args.sid}/%s/audio/%s_deid.wav"
     args.vad_filename = f"results/{args.sid}/vad/%s.csv"
     args.out_filename = f"results/{args.sid}/%s.csv"
@@ -87,6 +92,7 @@ def main():
         vad_df = pd.read_csv(args.vad_filename % conv)
         vad_df["sample_start"] = (vad_df.start * audio.audio_fs).astype(int)
         vad_df["sample_end"] = (vad_df.end * audio.audio_fs).astype(int)
+        vad_df["conv"] = conv
 
         def get_audio_segment(start, end):
             return audio.audio[:, int(start) : int(end)]
@@ -101,6 +107,7 @@ def main():
     all_audio = torch.cat(all_audio, dim=1)
     dia_df, speaker_df = pyannote_diarization(args, all_audio, SAMPLE_RATE)
 
+    all_vad_df.to_csv(args.out_filename % "vad_chunks", index=False)
     dia_df.to_csv(args.out_filename % "dia", index=False)
     speaker_df.to_csv(args.out_filename % "speaker", index=False)
 
