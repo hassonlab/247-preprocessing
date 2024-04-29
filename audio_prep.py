@@ -3,7 +3,6 @@ import glob
 import os
 import pandas as pd
 import argparse
-import whisperx
 from classes.audio import Audio
 
 
@@ -60,9 +59,9 @@ def main():
     # osd_df.to_csv(args.out_filename % "osd", index=False)
 
     ### WHISPER PIPELINE ###
-    audio.read_audio_whisper()
-    datum = audio.whisper_transcribe(args.model)
-    datum.to_csv(args.out_filename % f"whisper_{args.model}", index=False)
+    # audio.read_audio_whisper()
+    # datum = audio.whisper_transcribe(args.model)
+    # datum.to_csv(args.out_filename % f"whisper_{args.model}", index=False)
 
     return
 

@@ -105,6 +105,8 @@ def main():
         all_audio.append(conv_audio)
 
     all_audio = torch.cat(all_audio, dim=1)
+    print(f"Total size: {all_audio.shape[1]}")
+
     dia_df, speaker_df = pyannote_diarization(args, all_audio, SAMPLE_RATE)
 
     all_vad_df.to_csv(args.out_filename % "vad_chunks", index=False)
