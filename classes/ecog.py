@@ -44,7 +44,7 @@ class Ecog:
 
         self.sid = sid
         self.name = filename
-        self.non_electrode_id = ["SG", "EKG", "DC"]
+        self.non_electrode_id = ["SG", "EKG", "DC", "Pulse Rate"]
 
         self.__log.info("User: " + getpass.getuser())
 

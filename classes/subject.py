@@ -164,16 +164,16 @@ class Subject:
         for filetype in filetypes:
             if filetype == "audio-512Hz":
                 source_path = self.nyu_downsampled_audio_path
-                dest_path = self.filenames["audio_downsampled"].parent
+                dest_path = self.filenames["audio-512Hz"].parent
             elif filetype == "audio-deid":
                 source_path = self.nyu_deid_audio_path
-                dest_path = self.filenames["audio_deid"].parent
+                dest_path = self.filenames["audio-deid"].parent
             elif filetype == "silence":
                 source_path = self.nyu_deid_silence_path
                 dest_path = self.filenames["silence"].parent
             elif filetype == "ecog":
                 source_path = self.nyu_ecog_path
-                dest_path = self.filenames["ecog_raw"].parent
+                dest_path = self.filenames["ecog-raw"].parent
 
             source = self.source_endpoint_id + ":" + str(source_path)
             dest = self.dest_endpoint_id + ":" + str(dest_path)
@@ -191,11 +191,14 @@ class Subject:
                 ]
             )
 
-            tsk = (
-                subprocess.check_output(transfer_cmd, shell=True)
-                .decode("utf-8")
-                .replace("\n", "")
-            )
+            try:
+                tsk = (
+                    subprocess.check_output(transfer_cmd, shell=True)
+                    .decode("utf-8")
+                    .replace("\n", "")
+                )
+            except subprocess.CalledProcessError as grepexc:
+                print("error code", grepexc.returncode, grepexc.output)
 
             # TODO: instead of waiting for each one, should submit all then wait
             wait_cmd = " ".join(["globus", "task", "wait", tsk])
@@ -223,7 +226,6 @@ class Subject:
                     config_type = self.filenames[file.parents[1].stem]
                 except:
                     config_type = self.filenames[file.parent.stem]
-
                 file_name = Path(
                     str(config_type).format(
                         sid=self.sid, part=str(part + 1).zfill(3)
@@ -245,5 +247,4 @@ class Subject:
                     sid=self.sid, part=part
                 )
             )
-
         return file_name

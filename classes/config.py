@@ -46,18 +46,21 @@ class Config:
             / "transcript/xml/{sid}_Part{part}_verbit-transcript.xml",
             "log": self.base_path / "log/",
             "silence": self.base_path / "notes/deid/{sid}_Part{part}_silences.csv",
-            "elec-loc-MNI": (self.base_path / "anat/").glob("*_T1T2_coor_MNI*"),
-            "elec-loc-T1": (self.base_path / "anat/").glob("*_T1T2_coor_T1*"),
-            "elec-region": (self.base_path / "anat/").glob("*_lh_split_STG_MTG_AnatomicalRegions*"),
-            "brain-space": (self.base_path / "anat/").glob("*_pial_surf.mat"),
             "coor-file": self.base_path / "anat/{sid}_coordinates.csv",
             #"avg-brain-space": self.base_path / "anat/{sid}*_pial_surf.mat",
             "issue": self.base_path / "issue/",
         }
 
+    def configure_anat(self):
+        self.anat = {
+            "elec-loc-MNI": next((self.base_path / "anat/").glob("*_coor_MNI*")),
+            "elec-loc-T1": next((self.base_path / "anat/").glob("*_coor_T1*")),
+            "elec-region": next((self.base_path / "anat/").glob("*_lh_split_STG_MTG_AnatomicalRegions*")),
+            "brain-space": next((self.base_path / "anat/").glob("*_pial_surf.mat")),}
+
     def configure_paths_nyu(self):
         """Configurable filepaths on NYU server."""
-        nyu_base_path = Path("NY" + self.sid)
+        nyu_base_path = Path("NY" + (self.sid).strip("sub-"))
         self.nyu_paths = {
             "nyu_base_path": nyu_base_path,
             "nyu_ecog_path": nyu_base_path / "Dayfiles/",
@@ -65,8 +68,9 @@ class Config:
             "nyu_deid_silence_path": nyu_base_path / "DeidAudio/DeidSpreadsheets/",
             "nyu_downsampled_audio_path": nyu_base_path / "ZoomAudioFilesDownsampled/",
             "source_endpoint_id": "28e1658e-6ce6-11e9-bf46-0e4a062367b8",
-            "dest_endpoint_id": "6ce834d6-ff8a-11e6-bad1-22000b9a448b",
+            "dest_endpoint_id": "a9df83d2-42f0-11e6-80cf-22000b1701d1",
         }
+        # Volumes endpoint: "f9f9a7c8-be8d-4a4a-b925-fed19372b9d9"
 
     def write_config(self):
         """Write YAML file containing configured information for each subject."""
