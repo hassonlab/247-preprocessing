@@ -6,6 +6,7 @@ import socket
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
+import difflib
 from pathlib import Path
 from classes.ecog import Ecog
 from scipy.io import loadmat
@@ -137,6 +138,18 @@ class Plots:
             fignew.data[elec_idx]["surfacecolor"] = fignew.data[elec_idx]["surfacecolor"] * effect
 
         return fignew
+    
+    def color_grp(fignew):
+        grp_color = dict(["mSTG","royalblue"],["aSTG","violet"],["pSTG","darkgoldenrod"],
+                         ["TP","darkblue"],["IFG","springgreen"],["MTG","tomato"],
+                         ["precentral","darkgreen"],["postcentral","darkorange"],
+                         ["SM","firebrick"],["AG","lightskyblue"])
+        
+        for elec_idx in range(0,len(fignew.data)):
+            breakpoint()
+            fignew.data[elec_idx]["surfacecolor"] = grp_color["key"]
+
+        return fignew
 
     def update_properties(self,fig):
 
@@ -156,8 +169,8 @@ class Plots:
         )
 
         fig.update_layout(scene_camera=camera,scene=scene)
-        fig.update_traces(lighting_specular=0.4,colorbar_thickness=40,colorbar_tickfont_size=30,
-                        lighting_roughness=0.4,lightposition=dict(x=0, y=0, z=100))
+        #fig.update_traces(lighting_specular=0.4,colorbar_thickness=40,colorbar_tickfont_size=30,
+        #                lighting_roughness=0.4,lightposition=dict(x=0, y=0, z=100))
 
         return fig
 
@@ -174,10 +187,10 @@ class Plots:
         path = os.path.join(main_dir,"ecog_coordinates")
         
         surf1, surf2 = self.load_surf(path, id)
-        fig = plot_brain(surf1, surf2)
+        fig = self.plot_brain(surf1, surf2)
 
         if coor_in_effect_file == 0:
-            df_coor = read_coor(path,id)
+            df_coor = self.read_coor(path,id)
 
         for subset, cbar_title in enumerate(cbar_titles):
             
@@ -192,22 +205,24 @@ class Plots:
 
             if 'MNI_X' in df_eff.columns:
                 df_coor = df_eff
-                fignew = plot_electrodes(df_coor['index'],df_coor[coor_type+"_X"],df_coor[coor_type+"_Y"],df_coor[coor_type+"_Z"],
+                fignew = self.plot_electrodes(df_coor['index'],df_coor[coor_type+"_X"],df_coor[coor_type+"_Y"],df_coor[coor_type+"_Z"],
                     cbar_title,colorscale)
             else:
                 # Filter electrodes to plot
                 df_coor = df_coor[df_coor.name.isin(df_eff.name)]
-                fignew = plot_electrodes(df_coor['subject'] + df_coor['name'],df_coor[coor_type+"_X"],df_coor[coor_type+"_Y"],df_coor[coor_type+"_Z"],
+                fignew = self.plot_electrodes(df_coor['subject'] + df_coor['name'],df_coor[coor_type+"_X"],df_coor[coor_type+"_Y"],df_coor[coor_type+"_Z"],
                     cbar_title,colorscale)
                 
-            fignew = scale_colorbar(fignew, df_eff, cbar_min, cbar_max, cbar_title)
-            fignew = electrode_colors(fignew, df_eff, subset)
+            fignew = self.color_grp(fignew)
+
+            #fignew = self.scale_colorbar(fignew, df_eff, cbar_min, cbar_max, cbar_title)
+            #fignew = self.electrode_colors(fignew, df_eff, subset)
             
             # Add electrode traces to main figure
             for trace in range(0,len(fignew.data)):
                 fig.add_trace(fignew.data[trace])
 
-        fig = update_properties(fig)
+        fig = self.update_properties(fig)
 
         fig.write_image(outname, scale=6, width=1200, height=1000)
 
@@ -225,25 +240,27 @@ class Plots:
         
         return
     
-    def create_coor_file(self):
-        "Combine T1, MNI coordinates, annatomical regions information. Correct any naming discrepencies."
-
+    def read_T1_coor(self,subject_n):
         # T1, patient specific electrode coordinates
-        elec_loc_T1 = pd.read_csv(next(self.filenames["elec-loc-T1"]),
+        self.elec_loc_T1 = pd.read_csv(subject_n.anat["elec-loc-T1"],
                                   delimiter= ' ',
                                   index_col=False,
                                   names=["elec_name","X_T1","Y_T1","Z_T1","elec_type"]
                                   )
-        # MNI, average brain space
-        elec_loc_MNI = pd.read_csv(next(self.filenames["elec-loc-MNI"]),
+        
+    def read_MNI_coor(self,subject_n):
+                # MNI, average brain space
+        self.elec_loc_MNI = pd.read_csv(subject_n.anat["elec-loc-MNI"],
                                   delimiter= ' ',
                                   index_col=False,
                                   names=["elec_name","X_MNI","Y_MNI","Z_MNI","elec_type"]
                                   )
+        
+    def read_region(self,subject_n):
+        # Anatomical region of each electrode
         #TODO: Adapt number of percent, region pairs
         #TODO: Sort region based on percent?
-        # Anatomical region of each electrode
-        elec_region = pd.read_csv(next(self.filenames["elec-region"]),
+        self.elec_region = pd.read_csv(subject_n.anat["elec-region"],
                                   delimiter=' ',
                                   names=["elec_name","X_T1","Y_T1","Z_T1",
                                          "percent_1","region_1",
@@ -252,12 +269,43 @@ class Plots:
                                          "percent_4","region_4",
                                          "percent_5","region_5"]
                                          )
-        elec_summary = elec_region[elec_region.elec_name == "%"]
-        elec_region = elec_region[elec_region.elec_name != "%"]
-        elec_region[["X_T1","Y_T1","Z_T1"]] = elec_region[["X_T1","Y_T1","Z_T1"]].apply(pd.to_numeric)
+        
+    def merge_on_group(self,grp_1,grp_2,edf_file_names,coor_file,mismatch_names,match_names,merged_coor_file):
+
+        match_edf_file_names = edf_file_names[edf_file_names["lett"] == grp_1]
+
+        match_coor_file = coor_file[coor_file["lett"] == grp_2]
+        if match_coor_file.empty:
+            mismatch_names.append(grp_1)
+        else:
+            try:
+                match_coor_file = match_coor_file.merge(match_edf_file_names,on="num",how="right")
+                match_names.append(grp_1)
+            except:
+                mismatch_names.append(grp_1)
+            merged_coor_file = pd.concat([merged_coor_file,match_coor_file])
+
+        return mismatch_names,match_names,merged_coor_file
+    
+    def create_coor_file(self,subject_n):
+        "Combine T1, MNI coordinates, annatomical regions information. Correct any naming discrepencies."
+
+        # T1, patient specific electrode coordinates
+        self.read_T1_coor(subject_n)
+
+        # MNI, average brain space
+        self.read_MNI_coor(subject_n)
+
+        # Anatomical region of each electrode
+        self.read_region(subject_n)
+
+        # Separate only electrode lines
+        elec_summary = self.elec_region[self.elec_region.elec_name == "%"]
+        elec_region = self.elec_region[self.elec_region.elec_name != "%"]
         
         # Merge files into one
-        elec_loc = elec_loc_T1.merge(elec_loc_MNI,on=["elec_name","elec_type"])
+        elec_region[["X_T1","Y_T1","Z_T1"]] = elec_region[["X_T1","Y_T1","Z_T1"]].apply(pd.to_numeric)
+        elec_loc = self.elec_loc_T1.merge(self.elec_loc_MNI,on=["elec_name","elec_type"])
         coor_file = elec_loc.merge(elec_region,on=["elec_name","X_T1","Y_T1","Z_T1"])
 
         # Validate electrode naming (format to electrode names from EDF header)
@@ -266,12 +314,18 @@ class Plots:
         ecog_file.read_EDFHeader()
         valid_names = ecog_file.ecog_hdr["channels"]
 
-        #grp, num, *junk = re.split('(\d+)',elec)
         edf_file_names = pd.DataFrame(valid_names)
-        edf_file_names[["lett","num"]] = edf_file_names[0].str.extract('([A-Za-z]+)(\d+\.?\d*)',expand=True)
+
+        # Get rid of label padding in EDF header
+        padding = ["EEG","REF","-","_"]
+        for pat in padding:
+            edf_file_names[1] = edf_file_names[0].str.replace(pat,'')
+
+        edf_file_names[["lett","num"]] = edf_file_names[1].str.extract('([A-Za-z]+)(\d+\.?\d*)',expand=True)
 
         # Filter out known non-electrode channels
         edf_file_names = edf_file_names[~edf_file_names["lett"].isin(ecog_file.non_electrode_id)]
+        edf_file_names = edf_file_names[~edf_file_names[1].isin(ecog_file.non_electrode_id)]
         edf_file_names["num"] = pd.to_numeric(edf_file_names["num"])
 
         coor_file[["lett","num"]] = coor_file.elec_name.str.extract('([A-Za-z]+)(\d+\.?\d*)',expand=True)
@@ -279,17 +333,30 @@ class Plots:
         # First check is stripping leading zeros
         coor_file["num"] = pd.to_numeric(coor_file["num"])
 
+        mismatch_names = []
+        match_names = []
         merged_coor_file = pd.DataFrame()
         for grp in edf_file_names["lett"].unique():
-            match_edf_file_names = edf_file_names[edf_file_names["lett"] == grp]
+            mismatch_names,match_names,merged_coor_file = self.merge_on_group(
+                grp,grp,edf_file_names,coor_file,mismatch_names,match_names,merged_coor_file)
 
-            match_coor_file = coor_file[coor_file["lett"] == grp]
-            match_coor_file = match_coor_file.merge(match_edf_file_names,on="num",how="right")
-            merged_coor_file = pd.concat([merged_coor_file,match_coor_file])
-            
-        merged_coor_file.drop(["lett_x","lett_y","num"], axis=1, inplace=True)
+        if mismatch_names:
+            print('not empty') 
+            for grp in mismatch_names:
+                lft_over = coor_file["lett"][~coor_file["lett"].isin(match_names)].unique()
+                cls_match = difflib.get_close_matches(grp, lft_over)
+                if len(cls_match) > 1:
+                    print("TODO: multiple choices")
+                else:
+                    mismatch_names,match_names,merged_coor_file = self.merge_on_group(
+                        grp,cls_match[0],edf_file_names,coor_file,mismatch_names,match_names,merged_coor_file)
+
+        # Reformat coordinate file for saving
+        merged_coor_file.sort_values(by=["elec_type","lett_x","num"],inplace=True)
+        merged_coor_file.drop(["lett_x","lett_y","num",1], axis=1, inplace=True)
         column_to_move = merged_coor_file.pop(0)
         merged_coor_file.insert(1, "elec_name_edf", column_to_move )
+        merged_coor_file = merged_coor_file.reset_index(drop=True)
 
         merged_coor_file.to_csv(str(self.filenames["coor-file"]).format(sid=self.sid))
 
