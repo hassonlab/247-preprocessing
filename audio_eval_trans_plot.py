@@ -40,13 +40,16 @@ def main():
         #     plt_scatter(
         #         model_df, "no_speech_prob", "gt_word_num", f"{sid}_{model}_count"
         #     )
-    # total_df = total_df[total_df.wer <= 2]
+    # total_df = total_df[total_df.wer <= 1]
     # for model in total_df.model.unique():
     #     model_df = total_df[total_df.model == model]
     #     plt_scatter(model_df, "prob", "wer", "sid", f"{model}_wer1")
     #     plt_scatter(model_df, "no_speech_prob", "wer", "sid", f"{model}_wer2")
     #     plt_scatter(model_df, "no_speech_prob", "gt_word_num", "sid", f"{model}_count")
+    #     plt_scatter(model_df, "no_speech_prob", "prob", "sid", f"{model}_count")
 
+    total_df = total_df[total_df.sid != "798"]
+    breakpoint()
     fig, ax = plt.subplots()
     sns.set_style("whitegrid")
     plt.yscale("log")

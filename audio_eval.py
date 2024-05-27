@@ -27,30 +27,34 @@ def evaluate_whisper_chunk(grtr, pred):
     pred_grouped = pred.groupby("chunk", observed=True)
 
     results = []
+    grtrs = []
+    preds = []
     for (chunk1, grtr_group), (chunk2, pred_group) in zip(grtr_grouped, pred_grouped):
         result = []
 
         # grtr_group, pred_group = delete_inaudible(grtr_group, pred_group)
-        result.append(chunk1)
-        result.append(len(grtr_group))
+        # result.append(chunk1)
+        # result.append(len(grtr_group))
 
         grtr_trans = " ".join(grtr_group.word.astype(str).tolist())
         pred_trans = " ".join(pred_group.word.astype(str).tolist())
-        result.append(len(pred_trans.split(" ")))
+        # result.append(len(pred_trans.split(" ")))
+        grtrs.append([chunk1, grtr_trans])
+        preds.append([chunk1, pred_trans])
 
-        if len(grtr_group) == 0 or len(pred_group) == 0:  # silence
-            continue
-        wer = evaluate_preds([grtr_trans], [pred_trans])
-        # if wer >= 1.5:
-        #     breakpoint()
-        result.append(wer)
-        result.append(pred_group.temperature.mean())
-        result.append(pred_group.avg_logprob.mean())
-        result.append(pred_group.no_speech_prob.mean())
+        # if len(grtr_group) == 0 or len(pred_group) == 0:  # silence
+        #     continue
+        # wer = evaluate_preds([grtr_trans], [pred_trans])
+        # # if wer >= 1.5:
+        # #     breakpoint()
+        # result.append(wer)
+        # result.append(pred_group.temperature.mean())
+        # result.append(pred_group.avg_logprob.mean())
+        # result.append(pred_group.no_speech_prob.mean())
 
-        results.append(result)
+        # results.append(result)
 
-    return results
+    return results, grtrs, preds
 
 
 def delete_inaudible(grtr_group, pred_group):
@@ -91,6 +95,21 @@ def get_pred_whisper(predict_file):
     return df_pred
 
 
+def get_pred_whisperx(predict_file):
+    # get prediction
+    df_pred = pd.read_csv(predict_file)
+    df_pred["onset"] = df_pred.start * 512 - 3000
+    df_pred["offset"] = df_pred.end * 512 - 3000
+    df_pred["word"] = df_pred["word"].str.strip()
+    df_pred["word"] = df_pred["word"].apply(  # getting rid of punctuations
+        lambda x: str(x).translate(
+            str.maketrans("", "", '!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~')
+        )
+    )
+
+    return df_pred
+
+
 def get_transcript(datum_file):
     # original datum
     df = pd.read_csv(
@@ -126,11 +145,15 @@ def main():
     parser.add_argument("--sid", type=str, required=True)
 
     args = parser.parse_args()
-    args.models = ["whisperx_large-v2"]  # whisperx
     args.models = ["whisper_large-v2", "whisper_large-v3"]  # whisper
+    args.models = ["whisperx_large-v2"]  # whisperx
 
     total_result = pd.DataFrame()
-    for _, model in enumerate(args.models):
+    for model_idx, model in enumerate(args.models):
+
+        total_grtr = pd.DataFrame()
+        total_pred = pd.DataFrame()
+
         print(f"Running {model}")
         conv_dir = f"results/{args.sid}/{model}/*"
         conv_files = sorted(glob.glob(conv_dir))
@@ -144,27 +167,46 @@ def main():
                 print("WRONG WRONG WRONG")
                 breakpoint()
             transcript = get_transcript(gt_file_path[0])
-            pred = get_pred_whisper(conv)
-            results = evaluate_whisper_chunk(transcript, pred)
-            results = pd.DataFrame(results)
-            results.columns = [
-                "chunk",
-                "gt_word_num",
-                "pr_word_num",
-                "wer",
-                "temperature",
-                "avg_logprob",
-                "no_speech_prob",
-            ]
-            results["model"] = model
-            results["conversation"] = gt_file_string
+            pred = get_pred_whisperx(conv)
+            results, grtrs, preds = evaluate_whisper_chunk(transcript, pred)
+            
+            # results = pd.DataFrame(results)
+            # results.columns = [
+            #     "chunk",
+            #     "gt_word_num",
+            #     "pr_word_num",
+            #     "wer",
+            #     "temperature",
+            #     "avg_logprob",
+            #     "no_speech_prob",
+            # ]
+            # results["model"] = model
+            # results["conversation"] = gt_file_string
+            # total_result = pd.concat((total_result, results))
+
+            grtrs = pd.DataFrame(grtrs)
+            grtrs.columns = ["chunk", "text"]
+            grtrs["conversation"] = gt_file_string
+            total_grtr = pd.concat((total_grtr, grtrs))
+
+            preds = pd.DataFrame(preds)
+            preds.columns = ["chunk", "text"]
+            preds["conversation"] = gt_file_string
+            total_pred = pd.concat((total_pred, preds))
+
+        total_pred.to_csv(
+            f"results/{args.sid}/{args.sid}-{model}-text.csv", index=False
+        )
+        if model_idx == 0:
+            total_grtr.to_csv(
+                f"results/{args.sid}/{args.sid}-grtr-text.csv", index=False
+            )
 
             # speakers_utts = get_speakers_utts(pred)
             # results["speakers_utts"] = np.tile(
             #     speakers_utts, (len(results), 1)
             # ).tolist()
-            total_result = pd.concat((total_result, results))
-    total_result.to_csv(f"results/{args.sid}/{args.sid}-whisper.csv", index=False)
+    # total_result.to_csv(f"results/{args.sid}/{args.sid}-whisperx.csv", index=False)
 
     return
 
